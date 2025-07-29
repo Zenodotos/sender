@@ -120,8 +120,17 @@
     <!-- Message Content -->
     <div class="bg-white rounded-lg shadow p-6 mb-8">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Treść Wiadomości</h3>
-        <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
+        <div class="bg-gray-50 border border-gray-200 rounded-md p-4 tooltip-container cursor-help"
+             title="{{ campaign.message_content|escape }}">
             <pre class="whitespace-pre-wrap text-sm text-gray-700">{{ campaign.message_content }}</pre>
+            
+            <!-- Custom Tooltip for long messages -->
+            {% if campaign.message_content|length > 200 %}
+            <div class="tooltip">
+                <strong>Pełna treść wiadomości:</strong><br><br>
+                {{ campaign.message_content|escape }}
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -149,6 +158,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Odbiorca</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kontakt</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">💬 Wiadomość</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wysłano</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Błąd</th>
@@ -177,6 +187,18 @@
                                     </div>
                                 {% endif %}
                             </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            {% if recipient.personalized_message %}
+                            <div class="tooltip-container cursor-pointer inline-block">
+                                <span class="text-xl hover:text-blue-500 transition-colors">✉️</span>
+                                <div class="tooltip">
+                                    {{ recipient.personalized_message|escape }}
+                                </div>
+                            </div>
+                            {% else %}
+                            <span class="text-gray-300">-</span>
+                            {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -209,7 +231,7 @@
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
                             Brak odbiorców w tej kampanii
                         </td>
                     </tr>
@@ -289,7 +311,7 @@ async function refreshStatus() {
     refreshBtn.innerHTML = '🔄 Odświeżam...';
     
     try {
-        const response = await fetch(`/api/campaign-status/${campaignId}/`);
+        const response = await fetch('/api/campaign-status/' + campaignId + '/');
         const data = await response.json();
         
         if (data.success) {
@@ -302,7 +324,7 @@ async function refreshStatus() {
             // Update progress bar
             const percentage = data.stats.total > 0 ? Math.round((data.stats.sent / data.stats.total) * 100) : 0;
             document.getElementById('progress-bar').style.width = percentage + '%';
-            document.getElementById('progress-text').textContent = `${data.stats.sent} z ${data.stats.total} wysłanych (${percentage}%)`;
+            document.getElementById('progress-text').textContent = data.stats.sent + ' z ' + data.stats.total + ' wysłanych (' + percentage + '%)';
             
             // If campaign is completed, stop auto-refresh
             if (data.campaign.is_completed && typeof refreshInterval !== 'undefined') {
@@ -348,4 +370,48 @@ window.addEventListener('beforeunload', function() {
     }
 });
 </script>
+
+<style>
+/* Minimalistyczny tooltip styling */
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip-container:hover .tooltip {
+    visibility: visible;
+    opacity: 1;
+}
+
+.tooltip {
+    visibility: hidden;
+    opacity: 0;
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #000;
+    color: #fff;
+    padding: 6px 8px;
+    border-radius: 4px;
+    z-index: 1000;
+    max-width: 300px;
+    white-space: pre-wrap;
+    font-size: 11px;
+    line-height: 1.3;
+    transition: opacity 0.2s ease;
+    text-align: left;
+}
+
+.tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -4px;
+    border-width: 4px;
+    border-style: solid;
+    border-color: #000 transparent transparent transparent;
+}
+</style>
 {% endblock %}

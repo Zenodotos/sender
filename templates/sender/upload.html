@@ -124,7 +124,7 @@
                     <span class="hidden" id="create-spinner">
                         <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         Tworzę kampanię...
                     </span>
@@ -188,6 +188,34 @@
 
 {% block extra_js %}
 <script>
+// Test funkcji - dodaj na początku skryptu
+function insertVariable(variable) {
+    console.log('Inserting variable:', variable); // Debug
+    
+    const textarea = document.getElementById('message-content');
+    if (!textarea) {
+        console.error('Textarea not found!');
+        return;
+    }
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    
+    // Użyj rozdzielonej konkatenacji aby uniknąć interpretacji przez Django
+    const variableText = '{' + '{' + variable + '}' + '}';
+    textarea.value = before + variableText + after;
+    
+    // Ustaw kursor po wstawionej zmiennej
+    const newPosition = start + variableText.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPosition, newPosition);
+    
+    console.log('Variable inserted successfully:', variableText);
+}
+
 let uploadedData = null;
 let currentCampaignId = null;
 
@@ -212,7 +240,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // File input change
     document.getElementById('excel-file').addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
-            document.getElementById('upload-text').textContent = `Analizuj: ${e.target.files[0].name}`;
+            document.getElementById('upload-text').textContent = 'Analizuj: ' + e.target.files[0].name;
         }
     });
 });
@@ -250,6 +278,8 @@ async function handleExcelUpload(e) {
         
         const data = await response.json();
         
+        console.log('Upload response data:', data); // Debug - dodane
+        
         if (data.success) {
             uploadedData = data;
             showDataSummary(data);
@@ -273,13 +303,27 @@ async function handleCampaignCreate(e) {
         return;
     }
     
+    // Sprawdź czy wszystkie pola są wypełnione
+    const campaignName = document.getElementById('campaign-name').value;
+    const messageType = document.getElementById('message-type').value;
+    const messageContent = document.getElementById('message-content').value;
+    
+    if (!campaignName || !messageType || !messageContent) {
+        showToast('Wypełnij wszystkie wymagane pola', 'error');
+        return;
+    }
+    
     const formData = new FormData();
-    formData.append('campaign_name', document.getElementById('campaign-name').value);
-    formData.append('message_type', document.getElementById('message-type').value);
-    formData.append('message_content', document.getElementById('message-content').value);
+    formData.append('campaign_name', campaignName);
+    formData.append('message_type', messageType);
+    formData.append('message_content', messageContent);
     
     // Re-attach the Excel file
     const fileInput = document.getElementById('excel-file');
+    if (!fileInput.files[0]) {
+        showToast('Nie znaleziono pliku Excel. Spróbuj ponownie.', 'error');
+        return;
+    }
     formData.append('excel_file', fileInput.files[0]);
     
     showLoading('create');
@@ -299,11 +343,12 @@ async function handleCampaignCreate(e) {
             currentCampaignId = data.campaign_id;
             showCampaignSummary(data);
             showStep(3);
-            showToast(`Kampania utworzona! ${data.recipients_created} odbiorców dodanych.`, 'success');
+            showToast('Kampania utworzona! ' + data.recipients_created + ' odbiorców dodanych.', 'success');
         } else {
             showToast(data.error || 'Błąd podczas tworzenia kampanii', 'error');
         }
     } catch (error) {
+        console.error('Error in handleCampaignCreate:', error);
         showToast('Błąd połączenia z serwerem', 'error');
     } finally {
         hideLoading('create');
@@ -319,7 +364,7 @@ async function sendCampaign() {
     showLoading('send');
     
     try {
-        const response = await fetch(`/send-campaign/${currentCampaignId}/`, {
+        const response = await fetch('/send-campaign/' + currentCampaignId + '/', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': csrftoken,
@@ -330,10 +375,10 @@ async function sendCampaign() {
         const data = await response.json();
         
         if (data.success) {
-            showToast(`Kampania wysłana! Wysłano: ${data.results.sent}, Błędy: ${data.results.failed}`, 'success');
+            showToast('Kampania wysłana! Wysłano: ' + data.results.sent + ', Błędy: ' + data.results.failed, 'success');
             // Redirect to results page
             setTimeout(() => {
-                window.location.href = `/campaign-status/${currentCampaignId}/`;
+                window.location.href = '/campaign-status/' + currentCampaignId + '/';
             }, 2000);
         } else {
             showToast(data.error || 'Błąd podczas wysyłania kampanii', 'error');
@@ -346,101 +391,163 @@ async function sendCampaign() {
 }
 
 function showDataSummary(data) {
-    const summaryHtml = `
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <h4 class="font-medium text-blue-900 mb-2">📊 Podsumowanie Danych</h4>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                    <span class="text-blue-600 font-medium">Łącznie wierszy:</span>
-                    <div class="text-lg font-bold text-blue-900">${data.total_rows}</div>
-                </div>
-                <div>
-                    <span class="text-blue-600 font-medium">Z emailem:</span>
-                    <div class="text-lg font-bold text-blue-900">${data.sample_data.filter(row => row[data.mapped_columns.email]).length}</div>
-                </div>
-                <div>
-                    <span class="text-blue-600 font-medium">Z telefonem:</span>
-                    <div class="text-lg font-bold text-blue-900">${data.sample_data.filter(row => row[data.mapped_columns.phone]).length}</div>
-                </div>
-                <div>
-                    <span class="text-blue-600 font-medium">Dodatkowe kolumny:</span>
-                    <div class="text-lg font-bold text-blue-900">${data.extra_columns.length}</div>
-                </div>
-            </div>
-        </div>
+    console.log('showDataSummary data:', data); // Debug
+    
+    // Oblicz statystyki z danymi
+    let emailCount = 0;
+    let phoneCount = 0;
+    
+    data.sample_data.forEach(row => {
+        if (row[data.mapped_columns.email] && row[data.mapped_columns.email].trim() !== '') emailCount++;
+        if (row[data.mapped_columns.phone] && row[data.mapped_columns.phone].trim() !== '') phoneCount++;
+    });
+    
+    // Przygotuj mapowane kolumny HTML
+    let mappedColumnsHtml = '';
+    Object.entries(data.mapped_columns).forEach(([key, value]) => {
+        mappedColumnsHtml += '<div><span class="font-medium">' + key + ':</span> ' + value + '</div>';
+    });
+    
+    // Przygotuj nagłówki tabeli
+    const tableHeaders = Object.keys(data.sample_data[0] || {});
+    let tableHeadersHtml = '';
+    tableHeaders.forEach(col => {
+        tableHeadersHtml += '<th class="text-left py-1 px-2 font-medium">' + col + '</th>';
+    });
+    
+    // Przygotuj wiersze tabeli
+    let tableRowsHtml = '';
+    data.sample_data.slice(0, 2).forEach(row => {
+        tableRowsHtml += '<tr class="border-b border-gray-200">';
+        tableHeaders.forEach(col => {
+            const value = row[col] || '-';
+            tableRowsHtml += '<td class="py-1 px-2">' + value + '</td>';
+        });
+        tableRowsHtml += '</tr>';
+    });
+    
+    const summaryHtml = [
+        '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">',
+            '<h4 class="font-medium text-blue-900 mb-2">📊 Podsumowanie Danych</h4>',
+            '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">',
+                '<div>',
+                    '<span class="text-blue-600 font-medium">Łącznie wierszy:</span>',
+                    '<div class="text-lg font-bold text-blue-900">' + data.total_rows + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-blue-600 font-medium">Z emailem:</span>',
+                    '<div class="text-lg font-bold text-blue-900">' + emailCount + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-blue-600 font-medium">Z telefonem:</span>',
+                    '<div class="text-lg font-bold text-blue-900">' + phoneCount + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-blue-600 font-medium">Dodatkowe kolumny:</span>',
+                    '<div class="text-lg font-bold text-blue-900">' + data.extra_columns.length + '</div>',
+                '</div>',
+            '</div>',
+        '</div>',
         
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <div>
-                <h5 class="font-medium text-gray-900 mb-2">🎯 Mapowane Kolumny</h5>
-                <div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">
-                    ${Object.entries(data.mapped_columns).map(([key, value]) => 
-                        `<div><span class="font-medium">${key}:</span> ${value}</div>`
-                    ).join('')}
-                </div>
-            </div>
+        '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">',
+            '<div>',
+                '<h5 class="font-medium text-gray-900 mb-2">🎯 Mapowane Kolumny</h5>',
+                '<div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">',
+                    mappedColumnsHtml,
+                '</div>',
+            '</div>',
             
-            <div>
-                <h5 class="font-medium text-gray-900 mb-2">📋 Przykładowe Dane</h5>
-                <div class="bg-gray-50 border border-gray-200 rounded p-3 text-xs overflow-x-auto">
-                    <table class="w-full">
-                        <thead>
-                            <tr class="border-b border-gray-300">
-                                ${Object.keys(data.sample_data[0] || {}).map(col => 
-                                    `<th class="text-left py-1 px-2 font-medium">${col}</th>`
-                                ).join('')}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${data.sample_data.slice(0, 2).map(row => 
-                                `<tr class="border-b border-gray-200">
-                                    ${Object.values(row).map(val => 
-                                        `<td class="py-1 px-2">${val || '-'}</td>`
-                                    ).join('')}
-                                </tr>`
-                            ).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    `;
+            '<div>',
+                '<h5 class="font-medium text-gray-900 mb-2">📋 Przykładowe Dane</h5>',
+                '<div class="bg-gray-50 border border-gray-200 rounded p-3 text-xs overflow-x-auto">',
+                    '<table class="w-full">',
+                        '<thead>',
+                            '<tr class="border-b border-gray-300">',
+                                tableHeadersHtml,
+                            '</tr>',
+                        '</thead>',
+                        '<tbody>',
+                            tableRowsHtml,
+                        '</tbody>',
+                    '</table>',
+                '</div>',
+            '</div>',
+        '</div>'
+    ].join('');
     
     document.getElementById('data-summary').innerHTML = summaryHtml;
     
-    // Update available variables
-    const variables = ['first_name', 'last_name', 'email', 'phone', ...data.extra_columns];
-    const variablesHtml = variables.map(variable => 
-        `<span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1 cursor-pointer hover:bg-blue-200" 
-         onclick="insertVariable('${variable}')"">{{${variable}}}</span>`
-    ).join('');
+    // Update available variables - naprawione renderowanie
+    const variables = ['first_name', 'last_name', 'email', 'phone'];
     
-    document.getElementById('available-variables').innerHTML = variablesHtml;
+    // Dodaj dodatkowe kolumny - używaj rzeczywistych nazw z Excel'a
+    if (data.extra_columns && data.extra_columns.length > 0) {
+        data.extra_columns.forEach(col => {
+            variables.push(col);
+        });
+    }
+    
+    console.log('Available variables:', variables); // Debug
+    
+    // Buduj HTML dla zmiennych - używając buttonów zamiast onclick
+    let variablesHtml = '';
+    for (let i = 0; i < variables.length; i++) {
+        const variable = variables[i];
+        variablesHtml += '<button type="button" class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1 cursor-pointer hover:bg-blue-200 border-0" ';
+        variablesHtml += 'data-variable="' + variable + '" title="Kliknij aby wstawić: ' + variable + '">';
+        // Używam String concatenation aby uniknąć interpretacji przez Django
+        variablesHtml += '{' + '{' + variable + '}' + '}';
+        variablesHtml += '</button>';
+    }
+    
+    console.log('Variables HTML:', variablesHtml); // Debug
+    
+    const variablesElement = document.getElementById('available-variables');
+    if (variablesElement) {
+        variablesElement.innerHTML = variablesHtml;
+        
+        // Dodaj event listenery do buttonów
+        const variableButtons = variablesElement.querySelectorAll('button[data-variable]');
+        variableButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const variable = this.getAttribute('data-variable');
+                insertVariable(variable);
+            });
+        });
+        
+        console.log('Variables inserted successfully, buttons:', variableButtons.length); // Debug
+    } else {
+        console.error('available-variables element not found!');
+    }
 }
 
 function showCampaignSummary(data) {
-    const summaryHtml = `
-        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h4 class="font-medium text-green-900 mb-2">✅ Kampania Gotowa do Wysłania</h4>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div>
-                    <span class="text-green-600 font-medium">Nazwa kampanii:</span>
-                    <div class="font-bold text-green-900">${document.getElementById('campaign-name').value}</div>
-                </div>
-                <div>
-                    <span class="text-green-600 font-medium">Typ wiadomości:</span>
-                    <div class="font-bold text-green-900">${document.getElementById('message-type').selectedOptions[0].text}</div>
-                </div>
-                <div>
-                    <span class="text-green-600 font-medium">Odbiorcy:</span>
-                    <div class="font-bold text-green-900">${data.recipients_created} z ${data.total_rows}</div>
-                </div>
-                <div>
-                    <span class="text-green-600 font-medium">Status:</span>
-                    <div class="font-bold text-green-900">Gotowa do wysłania</div>
-                </div>
-            </div>
-        </div>
-    `;
+    const campaignName = document.getElementById('campaign-name').value;
+    const messageType = document.getElementById('message-type').selectedOptions[0].text;
+    
+    const summaryHtml = [
+        '<div class="bg-green-50 border border-green-200 rounded-lg p-4">',
+            '<h4 class="font-medium text-green-900 mb-2">✅ Kampania Gotowa do Wysłania</h4>',
+            '<div class="grid grid-cols-2 gap-4 text-sm">',
+                '<div>',
+                    '<span class="text-green-600 font-medium">Nazwa kampanii:</span>',
+                    '<div class="font-bold text-green-900">' + campaignName + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-green-600 font-medium">Typ wiadomości:</span>',
+                    '<div class="font-bold text-green-900">' + messageType + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-green-600 font-medium">Odbiorcy:</span>',
+                    '<div class="font-bold text-green-900">' + data.recipients_created + ' z ' + data.total_rows + '</div>',
+                '</div>',
+                '<div>',
+                    '<span class="text-green-600 font-medium">Status:</span>',
+                    '<div class="font-bold text-green-900">Gotowa do wysłania</div>',
+                '</div>',
+            '</div>',
+        '</div>'
+    ].join('');
     
     document.getElementById('campaign-summary').innerHTML = summaryHtml;
 }
@@ -456,47 +563,49 @@ function showPreview() {
     const sampleData = uploadedData.sample_data[0];
     let previewMessage = message;
     
-    // Replace variables with sample data
-    previewMessage = previewMessage.replace(/\{\{first_name\}\}/g, sampleData[uploadedData.mapped_columns.first_name] || '[IMIĘ]');
-    previewMessage = previewMessage.replace(/\{\{last_name\}\}/g, sampleData[uploadedData.mapped_columns.last_name] || '[NAZWISKO]');
-    previewMessage = previewMessage.replace(/\{\{email\}\}/g, sampleData[uploadedData.mapped_columns.email] || '[EMAIL]');
-    previewMessage = previewMessage.replace(/\{\{phone\}\}/g, sampleData[uploadedData.mapped_columns.phone] || '[TELEFON]');
+    console.log('Preview sample data:', sampleData); // Debug
+    console.log('Preview mapped columns:', uploadedData.mapped_columns); // Debug
     
-    // Replace extra variables
+    // Replace variables with sample data - używaj rzeczywistych nazw kolumn
+    if (uploadedData.mapped_columns.first_name) {
+        previewMessage = previewMessage.replace(/\{\{first_name\}\}/g, 
+            sampleData[uploadedData.mapped_columns.first_name] || '[IMIĘ]');
+    }
+    if (uploadedData.mapped_columns.last_name) {
+        previewMessage = previewMessage.replace(/\{\{last_name\}\}/g, 
+            sampleData[uploadedData.mapped_columns.last_name] || '[NAZWISKO]');
+    }
+    if (uploadedData.mapped_columns.email) {
+        previewMessage = previewMessage.replace(/\{\{email\}\}/g, 
+            sampleData[uploadedData.mapped_columns.email] || '[EMAIL]');
+    }
+    if (uploadedData.mapped_columns.phone) {
+        previewMessage = previewMessage.replace(/\{\{phone\}\}/g, 
+            sampleData[uploadedData.mapped_columns.phone] || '[TELEFON]');
+    }
+    
+    // Replace extra variables - używaj rzeczywistych nazw kolumn z Excel
     uploadedData.extra_columns.forEach(col => {
-        const regex = new RegExp(`\\{\\{${col}\\}\\}`, 'g');
-        previewMessage = previewMessage.replace(regex, sampleData[col] || `[${col.toUpperCase()}]`);
+        const regex = new RegExp('\\{\\{' + col + '\\}\\}', 'g');
+        previewMessage = previewMessage.replace(regex, sampleData[col] || '[' + col.toUpperCase() + ']');
     });
     
     document.getElementById('preview-content').textContent = previewMessage;
     document.getElementById('preview-modal').classList.remove('hidden');
 }
 
-function insertVariable(variable) {
-    const textarea = document.getElementById('message-content');
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const text = textarea.value;
-    const before = text.substring(0, start);
-    const after = text.substring(end, text.length);
-    
-    textarea.value = before + `{{${variable}}}` + after;
-    textarea.focus();
-    textarea.setSelectionRange(start + variable.length + 4, start + variable.length + 4);
-}
-
 function showStep(stepNumber) {
     // Hide all steps
     for (let i = 1; i <= 3; i++) {
-        document.getElementById(`step-${i}`).classList.add('hidden');
+        document.getElementById('step-' + i).classList.add('hidden');
     }
     
     // Show current step
-    document.getElementById(`step-${stepNumber}`).classList.remove('hidden');
+    document.getElementById('step-' + stepNumber).classList.remove('hidden');
     
     // Update step indicators
     for (let i = 1; i <= 3; i++) {
-        const indicator = document.querySelector(`#step-${i} .w-8`);
+        const indicator = document.querySelector('#step-' + i + ' .w-8');
         if (i <= stepNumber) {
             indicator.classList.add('bg-primary-500', 'text-white');
             indicator.classList.remove('bg-gray-300', 'text-gray-600');
@@ -505,23 +614,65 @@ function showStep(stepNumber) {
 }
 
 function showLoading(type) {
-    const button = document.getElementById(`${type}-btn`);
-    const spinner = document.getElementById(`${type}-spinner`);
-    const text = document.getElementById(`${type}-text`);
+    let buttonId, spinnerId, textId;
+    
+    if (type === 'upload') {
+        buttonId = 'upload-btn';
+        spinnerId = 'upload-spinner';
+        textId = 'upload-text';
+    } else if (type === 'create') {
+        buttonId = 'create-campaign-btn';
+        spinnerId = 'create-spinner';
+        textId = 'create-text';
+    } else if (type === 'send') {
+        buttonId = 'send-campaign-btn';
+        spinnerId = 'send-spinner';
+        textId = 'send-text';
+    }
+    
+    const button = document.getElementById(buttonId);
+    const spinner = document.getElementById(spinnerId);
+    const text = document.getElementById(textId);
+    
+    if (!button) {
+        console.error('Button not found:', buttonId);
+        return;
+    }
     
     button.disabled = true;
-    spinner.classList.remove('hidden');
-    text.classList.add('hidden');
+    if (spinner) spinner.classList.remove('hidden');
+    if (text) text.classList.add('hidden');
 }
 
 function hideLoading(type) {
-    const button = document.getElementById(`${type}-btn`);
-    const spinner = document.getElementById(`${type}-spinner`);
-    const text = document.getElementById(`${type}-text`);
+    let buttonId, spinnerId, textId;
+    
+    if (type === 'upload') {
+        buttonId = 'upload-btn';
+        spinnerId = 'upload-spinner';
+        textId = 'upload-text';
+    } else if (type === 'create') {
+        buttonId = 'create-campaign-btn';
+        spinnerId = 'create-spinner';
+        textId = 'create-text';
+    } else if (type === 'send') {
+        buttonId = 'send-campaign-btn';
+        spinnerId = 'send-spinner';
+        textId = 'send-text';
+    }
+    
+    const button = document.getElementById(buttonId);
+    const spinner = document.getElementById(spinnerId);
+    const text = document.getElementById(textId);
+    
+    if (!button) {
+        console.error('Button not found:', buttonId);
+        return;
+    }
     
     button.disabled = false;
-    spinner.classList.add('hidden');
-    text.classList.remove('hidden');
+    if (spinner) spinner.classList.add('hidden');
+    if (text) text.classList.remove('hidden');
 }
 </script>
 {% endblock %}
