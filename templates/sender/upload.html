@@ -67,6 +67,7 @@
                     <label class="label">
                         <span class="label-text font-semibold">Nazwa Kampanii</span>
                     </label>
+                    <p class="label-text text-xs text-base-content/60 space-y-1 mb-4">Uwaga: nazwa kampanii będzie tytułem maila</p>
                     <input type="text" id="campaign-name" name="campaign_name" required
                            placeholder="np. Promocja Black Friday 2024"
                            class="input input-bordered w-full" />
@@ -129,11 +130,7 @@
 
     <!-- Step 3: Send Campaign -->
     <div id="step-3" class="card bg-base-100 shadow-xl hidden">
-        <button type="button"
-              id="back-to-step2-btn"
-              class="btn">
-        ← Cofnij
-      </button>
+        
         <div class="card-body">
             <div class="flex items-center gap-4 mb-6">
                 <div class="badge badge-primary badge-lg text-white">3</div>
@@ -203,9 +200,7 @@ let uploadedData = null;
 let currentCampaignId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    document
-    .getElementById('back-to-step2-btn')
-    .addEventListener('click', () => showStep(2));
+
     document.getElementById('excel-upload-form').addEventListener('submit', handleExcelUpload);
     document.getElementById('campaign-form').addEventListener('submit', handleCampaignCreate);
     document.getElementById('preview-btn').addEventListener('click', showPreview);
@@ -296,11 +291,14 @@ async function handleCampaignCreate(e) {
         
         const data = await response.json();
         
-        if (data.success) {
+       if (data.success) {
             currentCampaignId = data.campaign_id;
-            showCampaignSummary(data);
-            showStep(3);
-            showToast('Kampania utworzona! ' + data.recipients_created + ' odbiorców dodanych.', 'success');
+            showToast(`Kampania utworzona! ${data.recipients_created} odbiorców dodanych.`, 'success');
+            
+            // Automatyczne przekierowanie do widoku szczegółów kampanii
+            setTimeout(() => {
+                window.location.href = data.redirect_url;
+            }, 1500);
         } else {
             showToast(data.error || 'Błąd podczas tworzenia kampanii', 'error');
         }

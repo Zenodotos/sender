@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+
+{% block title %}Edycja Kampanii - {{ campaign.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-base-content">Edycja Kampanii</h1>
+            <p class="text-base-content/70 mt-2">Modyfikuj parametry kampanii przed wysłaniem</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'campaign_status' campaign.uid %}" class="btn btn-outline">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg>
+                Powrót
+            </a>
+        </div>
+    </div>
+
+    <!-- Campaign Info Alert -->
+    <div class="alert alert-info">
+        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+        </svg>
+        <div>
+            <h4 class="font-bold">Informacje o kampanii</h4>
+            <div class="text-sm mt-1">
+                <div>Utworzona: {{ campaign.created_at|date:"d.m.Y H:i" }}</div>
+                <div>Odbiorcy: {{ campaign.recipients.count }}</div>
+                <div>Status: 
+                    {% if campaign.is_completed %}
+                        <span class="badge badge-success">Zakończona</span>
+                    {% else %}
+                        <span class="badge badge-warning">W przygotowaniu</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edytuj Kampanię
+            </h2>
+
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Campaign Name -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-semibold">Nazwa Kampanii</span>
+                    </label>
+                    <input type="text" name="campaign_name" value="{{ campaign.name }}" required
+                           placeholder="np. Promocja Black Friday 2024"
+                           class="input input-bordered w-full" />
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Message Type -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-semibold">Typ Wiadomości</span>
+                        </label>
+                        <select name="message_type" required class="select select-bordered w-full">
+                            <option value="email" {% if campaign.message_type == 'email' %}selected{% endif %}>📧 Tylko Email</option>
+                            <option value="sms" {% if campaign.message_type == 'sms' %}selected{% endif %}>📱 Tylko SMS</option>
+                            <option value="both" {% if campaign.message_type == 'both' %}selected{% endif %}>📧📱 Email i SMS</option>
+                        </select>
+                    </div>
+
+                    <!-- Available Variables -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-semibold">Dostępne Zmienne</span>
+                        </label>
+                        <div id="available-variables" class="bg-base-200 rounded-lg p-4 min-h-[80px] flex flex-wrap gap-2">
+                            <!-- Basic variables -->
+                            <button type="button" class="btn btn-xs btn-soft btn-primary" 
+                                   data-variable="first_name" title="Kliknij aby wstawić">
+                                   &#123;&#123;first_name&#125;&#125;
+                            </button>
+                            <button type="button" class="btn btn-xs btn-soft btn-primary" 
+                                   data-variable="last_name" title="Kliknij aby wstawić">
+                                   &#123;&#123;last_name&#125;&#125;
+                            </button>
+                            <button type="button" class="btn btn-xs btn-soft btn-primary" 
+                                   data-variable="email" title="Kliknij aby wstawić">
+                                   &#123;&#123;email&#125;&#125;
+                            </button>
+                            <button type="button" class="btn btn-xs btn-soft btn-primary" 
+                                   data-variable="phone" title="Kliknij aby wstawić">
+                                   &#123;&#123;phone&#125;&#125;
+                            </button>
+                            
+                            <!-- Extra columns from Excel -->
+                            {% for col, mapped_col in campaign.excel_columns.items %}
+                                {% if col not in 'first_name,last_name,email,phone' %}
+                                <button type="button" class="btn btn-xs btn-soft btn-secondary" 
+                                       data-variable="{{ mapped_col }}" title="Kliknij aby wstawić">
+                                       &#123;&#123;{{ mapped_col }}&#125;&#125;
+                                </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Message Content -->
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-semibold">Treść Wiadomości</span>
+                    </label>
+                    <textarea id="message-content" name="message_content" rows="8" required
+                              placeholder="Cześć {{first_name}}! Mamy dla Ciebie specjalną ofertę..."
+                              class="textarea textarea-bordered h-40">{{ campaign.message_content }}</textarea>
+                    <label class="label">
+                        <span class="label-text-alt">Użyj zmiennych w formacie {{nazwa_zmiennej}} aby spersonalizować wiadomość</span>
+                    </label>
+                </div>
+
+                <!-- Character Count for SMS -->
+                <div class="alert alert-info">
+                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                    </svg>
+                    <div>
+                        <div class="text-sm">
+                            <div id="char-count">Znaki: 0</div>
+                            <div id="sms-count">SMS: 1</div>
+                            <div class="mt-1 text-xs">Pojedynczy SMS: do 160 znaków. Zmienne będą zastąpione rzeczywistymi wartościami.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-actions justify-end gap-4">
+                    <a href="{% url 'campaign_status' campaign.uid %}" class="btn btn-outline">Anuluj</a>
+                    <button type="button" id="preview-btn" class="btn btn-outline btn-secondary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Podgląd
+                    </button>
+                    <button type="submit" class="btn btn-primary btn-wide">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Zapisz Zmiany
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Recipients Preview -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body">
+            <h3 class="card-title text-lg">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                Odbiorcy ({{ campaign.recipients.count }})
+            </h3>
+            
+            {% if campaign.recipients.count > 0 %}
+            <div class="overflow-x-auto">
+                <table class="table table-zebra table-sm">
+                    <thead>
+                        <tr>
+                            <th>Imię i Nazwisko</th>
+                            <th>Email</th>
+                            <th>Telefon</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for recipient in campaign.recipients.all|slice:":5" %}
+                        <tr>
+                            <td>{{ recipient.first_name }} {{ recipient.last_name }}</td>
+                            <td>{{ recipient.email|default:"-" }}</td>
+                            <td>{{ recipient.phone|default:"-" }}</td>
+                            <td>
+                                {% if recipient.status == 'pending' %}
+                                    <div class="badge badge-warning badge-sm">Oczekuje</div>
+                                {% elif recipient.status == 'sent' %}
+                                    <div class="badge badge-success badge-sm">Wysłane</div>
+                                {% elif recipient.status == 'failed' %}
+                                    <div class="badge badge-error badge-sm">Błąd</div>
+                                {% else %}
+                                    <div class="badge badge-ghost badge-sm">{{ recipient.status }}</div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% if campaign.recipients.count > 5 %}
+                        <tr>
+                            <td colspan="4" class="text-center text-base-content/60">
+                                ... i {{ campaign.recipients.count|add:"-5" }} więcej
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-8 text-base-content/60">
+                Brak odbiorców w tej kampanii
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Preview Modal -->
+<dialog id="preview-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Podgląd Wiadomości</h3>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+            </form>
+        </div>
+        <div id="preview-content" class="bg-base-200 rounded-lg p-4 whitespace-pre-wrap text-sm">
+            <!-- Podgląd wiadomości -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Zamknij</button>
+            </form>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function insertVariable(variable) {
+    const textarea = document.getElementById('message-content');
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const before = text.substring(0, start);
+    const after = text.substring(end, text.length);
+    
+    const variableText = '{' + '{' + variable + '}' + '}';
+    textarea.value = before + variableText + after;
+    
+    const newPosition = start + variableText.length;
+    textarea.focus();
+    textarea.setSelectionRange(newPosition, newPosition);
+    
+    updateCharCount();
+}
+
+function updateCharCount() {
+    const textarea = document.getElementById('message-content');
+    const text = textarea.value;
+    const charCount = text.length;
+    const smsCount = Math.ceil(charCount / 160) || 1;
+    
+    document.getElementById('char-count').textContent = `Znaki: ${charCount}`;
+    document.getElementById('sms-count').textContent = `SMS: ${smsCount}`;
+}
+
+function showPreview() {
+    const message = document.getElementById('message-content').value;
+    if (!message.trim()) {
+        showToast('Wprowadź treść wiadomości', 'error');
+        return;
+    }
+    
+    // Sample data for preview (first recipient or default values)
+    let previewMessage = message;
+    
+    // Replace variables with sample data
+    previewMessage = previewMessage.replace(/\{\{first_name\}\}/g, 'Jan');
+    previewMessage = previewMessage.replace(/\{\{last_name\}\}/g, 'Kowalski');
+    previewMessage = previewMessage.replace(/\{\{email\}\}/g, 'jan.kowalski@example.com');
+    previewMessage = previewMessage.replace(/\{\{phone\}\}/g, '+48 600 123 456');
+    
+    // Replace other variables with placeholder
+    previewMessage = previewMessage.replace(/\{\{([^}]+)\}\}/g, '[PRZYKŁAD_$1]');
+    
+    document.getElementById('preview-content').textContent = previewMessage;
+    document.getElementById('preview-modal').showModal();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Variable insertion
+    const variableButtons = document.querySelectorAll('button[data-variable]');
+    variableButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const variable = this.getAttribute('data-variable');
+            insertVariable(variable);
+        });
+    });
+    
+    // Character count
+    const textarea = document.getElementById('message-content');
+    textarea.addEventListener('input', updateCharCount);
+    updateCharCount();
+    
+    // Preview button
+    document.getElementById('preview-btn').addEventListener('click', showPreview);
+});
+</script>
+{% endblock %}

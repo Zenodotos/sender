@@ -41,7 +41,27 @@ def campaigns_view(request):
                 campaign.is_completed = True
                 campaign.save()
     
-    return render(request, 'sender/campaigns.html', {'campaigns': campaigns})
+    # Oblicz globalne statystyki
+    total_campaigns = campaigns.count()
+    completed_campaigns = sum(1 for campaign in campaigns if campaign.is_completed)
+    pending_campaigns = total_campaigns - completed_campaigns
+    total_recipients_all = sum(campaign.total_recipients for campaign in campaigns)
+    total_sent_all = sum(campaign.sent_count for campaign in campaigns)
+    total_failed_all = sum(campaign.failed_count for campaign in campaigns)
+    
+    context = {
+        'campaigns': campaigns,
+        'global_stats': {
+            'total_campaigns': total_campaigns,
+            'completed_campaigns': completed_campaigns,
+            'pending_campaigns': pending_campaigns,
+            'total_recipients': total_recipients_all,
+            'total_sent': total_sent_all,
+            'total_failed': total_failed_all,
+        }
+    }
+    
+    return render(request, 'sender/campaigns.html', context)
 
 
 def campaign_status(request, campaign_id):
@@ -115,6 +135,122 @@ def campaign_status(request, campaign_id):
     }
     
     return render(request, 'sender/campaign_status.html', context)
+
+
+def edit_campaign(request, campaign_id):
+    """Widok edycji kampanii"""
+    campaign = get_object_or_404(Campaign, uid=campaign_id)
+    
+    # Sprawdź czy kampania może być edytowana
+    if campaign.is_completed or campaign.sent_at:
+        messages.error(request, 'Nie można edytować wysłanej kampanii')
+        return redirect('campaign_status', campaign_id=campaign_id)
+    
+    # Sprawdź czy są wysłane wiadomości
+    if campaign.recipients.filter(status='sent').exists():
+        messages.error(request, 'Nie można edytować kampanii z wysłanymi wiadomościami')
+        return redirect('campaign_status', campaign_id=campaign_id)
+    
+    if request.method == 'POST':
+        try:
+            campaign_name = request.POST.get('campaign_name')
+            message_type = request.POST.get('message_type')
+            message_content = request.POST.get('message_content')
+            
+            # Walidacja
+            if not all([campaign_name, message_type, message_content]):
+                messages.error(request, 'Wszystkie pola są wymagane')
+                return render(request, 'sender/edit_campaign.html', {'campaign': campaign})
+            
+            if message_type not in ['email', 'sms', 'both']:
+                messages.error(request, 'Nieprawidłowy typ wiadomości')
+                return render(request, 'sender/edit_campaign.html', {'campaign': campaign})
+            
+            # Aktualizuj kampanię
+            campaign.name = campaign_name
+            campaign.message_type = message_type
+            campaign.message_content = message_content
+            campaign.save()
+            
+            messages.success(request, 'Kampania została zaktualizowana')
+            return redirect('campaign_status', campaign_id=campaign_id)
+            
+        except Exception as e:
+            logger.error(f"Error updating campaign: {str(e)}")
+            messages.error(request, f'Błąd podczas aktualizacji: {str(e)}')
+    
+    return render(request, 'sender/edit_campaign.html', {'campaign': campaign})
+
+
+@require_http_methods(["DELETE", "POST"])
+def delete_campaign(request, campaign_id):
+    """Endpoint do usuwania kampanii"""
+    try:
+        campaign = get_object_or_404(Campaign, uid=campaign_id)
+        
+        # Sprawdź czy kampania może być usunięta
+        # Można usunąć kampanię tylko jeśli nie ma wysłanych wiadomości
+        sent_count = campaign.recipients.filter(status='sent').count()
+        
+        if sent_count > 0:
+            return JsonResponse({
+                'success': False, 
+                'error': f'Nie można usunąć kampanii z {sent_count} wysłanymi wiadomościami'
+            })
+        
+        campaign_name = campaign.name
+        
+        # Usuń kampanię (CASCADE usunie również odbiorców i logi)
+        campaign.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Kampania "{campaign_name}" została usunięta'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error deleting campaign: {str(e)}")
+        return JsonResponse({'success': False, 'error': f'Błąd serwera: {str(e)}'})
+
+
+@require_http_methods(["POST"])
+def duplicate_campaign(request, campaign_id):
+    """Endpoint do duplikowania kampanii"""
+    try:
+        original_campaign = get_object_or_404(Campaign, uid=campaign_id)
+        
+        # Utwórz kopię kampanii
+        new_campaign = Campaign.objects.create(
+            name=f"{original_campaign.name} (kopia)",
+            message_type=original_campaign.message_type,
+            message_content=original_campaign.message_content,
+            excel_columns=original_campaign.excel_columns
+        )
+        
+        # Skopiuj odbiorców (tylko tych którzy nie zostali wysłani)
+        recipients_copied = 0
+        for recipient in original_campaign.recipients.all():
+            Recipient.objects.create(
+                campaign=new_campaign,
+                first_name=recipient.first_name,
+                last_name=recipient.last_name,
+                email=recipient.email,
+                phone=recipient.phone,
+                extra_data=recipient.extra_data,
+                status='pending'  # Zawsze ustawiaj jako pending
+            )
+            recipients_copied += 1
+        
+        return JsonResponse({
+            'success': True,
+            'campaign_id': str(new_campaign.uid),
+            'message': f'Kampania zduplikowana. Skopiowano {recipients_copied} odbiorców.',
+            'redirect_url': f'/campaign-status/{new_campaign.uid}/'
+        })
+        
+    except Exception as e:
+        logger.error(f"Error duplicating campaign: {str(e)}")
+        return JsonResponse({'success': False, 'error': f'Błąd serwera: {str(e)}'})
 
 
 @require_http_methods(["POST"])
@@ -360,7 +496,8 @@ def create_campaign(request):
             'campaign_id': str(campaign.uid),
             'recipients_created': recipients_created,
             'skipped_recipients': skipped_recipients,
-            'total_rows': len(df)
+            'total_rows': len(df),
+            'redirect_url': f'/campaign-status/{campaign.uid}/?created=1'
         })
         
     except Exception as e:
@@ -528,6 +665,7 @@ def api_campaign_status(request, campaign_id):
     except Exception as e:
         logger.error(f"Error in api_campaign_status: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+    
     
 def template(request):
     return render(request, 'sender/template.html')

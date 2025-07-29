@@ -20,6 +20,22 @@
                 </svg>
                 Nowa Kampania
             </a>
+            {% if not campaign.is_completed and stats.sent == 0 %}
+            <a href="{% url 'edit_campaign' campaign.uid %}" class="btn btn-outline btn-secondary">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+                Edytuj
+            </a>
+            {% endif %}
+            {% if not campaign.is_completed %}
+            <button onclick="sendCampaign('{{ campaign.uid }}')" class="btn btn-success">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+                Wyślij Kampanię
+            </button>
+            {% endif %}
             <button onclick="refreshStatus()" id="refresh-btn" class="btn btn-outline">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
@@ -72,6 +88,29 @@
         </div>
     </div>
 
+    <!-- Action Card for new campaigns -->
+    {% if not campaign.is_completed and stats.sent == 0 and stats.total > 0 %}
+    <div class="card bg-gradient-to-r from-primary to-primary-focus text-primary-content shadow-xl" id="launch-card">
+        <div class="card-body text-center">
+            <h2 class="card-title justify-center text-2xl">
+                🚀 Kampania Gotowa do Wysłania!
+            </h2>
+            <p class="text-lg opacity-90">
+                Przeanalizowano {{ stats.total }} odbiorców. Wszystko gotowe!
+            </p>
+            <div class="card-actions justify-center mt-4">
+                <button onclick="sendCampaign('{{ campaign.uid }}')" class="btn btn-success btn-lg gap-3 animate-pulse">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    Wyślij Kampanię Teraz
+                    <div class="badge badge-neutral">{{ stats.total }} odbiorców</div>
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Progress Section -->
     {% if stats.total > 0 %}
     <div class="card bg-base-100 shadow-xl">
@@ -106,8 +145,6 @@
                 Treść Wiadomości
             </h2>
             
-
-
             <div class="chat chat-start">
                 <div class="chat-header mb-1">
                     {{campaign.name}}
@@ -306,10 +343,92 @@
 <script>
 const campaignId = '{{ campaign.uid }}';
 
-// Auto-refresh if campaign is not completed
+// Auto-refresh if campaign is not completed - zwiększone częstotliwość na początku
 {% if not campaign.is_completed %}
-let refreshInterval = setInterval(refreshStatus, 5000);
+let refreshInterval = setInterval(refreshStatus, 3000); // Co 3 sekundy dla aktywnych kampanii
+let refreshCount = 0;
+
+// Po 30 odświeżaniach (1.5 minuty) zmień na rzadsze odświeżanie
+setTimeout(() => {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = setInterval(refreshStatus, 10000); // Co 10 sekund
+    }
+}, 90000); // 1.5 minuty
 {% endif %}
+
+// Odśwież status natychmiast po załadowaniu strony
+document.addEventListener('DOMContentLoaded', function() {
+    // Sprawdź czy to świeżo utworzona kampania (z parametrem URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.has('created') || {{ stats.total }} > 0 && {{ stats.sent }} === 0) {
+        showToast('Kampania została utworzona! Gotowa do wysłania.', 'success');
+        
+        // Odśwież status po krótkiej chwili, żeby dać backendowi czas na przetworzenie
+        setTimeout(refreshStatus, 1000);
+    }
+});
+
+async function sendCampaign(campaignId) {
+    const modal = document.createElement('dialog');
+    modal.className = 'modal';
+    modal.innerHTML = `
+        <div class="modal-box">
+            <h3 class="font-bold text-lg">Potwierdź wysłanie</h3>
+            <p class="py-4">Czy na pewno chcesz wysłać tę kampanię?</p>
+            <div class="modal-action">
+                <button class="btn" onclick="this.closest('dialog').close()">Anuluj</button>
+                <button class="btn btn-primary" onclick="confirmSend('${campaignId}')">Wyślij</button>
+            </div>
+        </div>
+        <form method="dialog" class="modal-backdrop">
+            <button>close</button>
+        </form>
+    `;
+    document.body.appendChild(modal);
+    modal.showModal();
+}
+
+async function confirmSend(campaignId) {
+    document.querySelector('dialog').close();
+    
+    // Hide launch card
+    const launchCard = document.getElementById('launch-card');
+    if (launchCard) {
+        launchCard.style.display = 'none';
+    }
+    
+    showToast('Wysyłanie kampanii...', 'info');
+    
+    try {
+        const response = await fetch('/send-campaign/' + campaignId + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`Kampania wysłana! Wysłano: ${data.results.sent}, Błędy: ${data.results.failed}`, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showToast(data.error || 'Błąd podczas wysyłania kampanii', 'error');
+            // Show launch card again if error
+            if (launchCard) {
+                launchCard.style.display = 'block';
+            }
+        }
+    } catch (error) {
+        showToast('Błąd połączenia z serwerem', 'error');
+        // Show launch card again if error
+        if (launchCard) {
+            launchCard.style.display = 'block';
+        }
+    }
+}
 
 async function refreshStatus() {
     const refreshBtn = document.getElementById('refresh-btn');
