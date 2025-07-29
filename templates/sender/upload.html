@@ -3,200 +3,187 @@
 {% block title %}Nowa Kampania - System Wysyłki{% endblock %}
 
 {% block content %}
-<div class="px-4 py-6 sm:px-0">
+<div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
-    <div class="mb-8">
-        <h2 class="text-3xl font-bold text-gray-900">Utwórz Nową Kampanię</h2>
-        <p class="mt-2 text-gray-600">Prześlij plik Excel z danymi odbiorców i skonfiguruj kampanię wysyłki</p>
+    <div class="text-center mb-8">
+        <h1 class="text-4xl font-bold text-base-content">Utwórz Nową Kampanię</h1>
+        <p class="text-base-content/70 mt-2">Prześlij plik Excel z danymi odbiorców i skonfiguruj kampanię wysyłki</p>
     </div>
 
     <!-- Step 1: Upload Excel -->
-    <div id="step-1" class="bg-white shadow rounded-lg p-6 mb-6">
-        <div class="flex items-center mb-4">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-medium">1</div>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-medium text-gray-900">Prześlij plik Excel</h3>
-                <p class="text-sm text-gray-500">Plik powinien zawierać kolumny: imię, nazwisko, email, telefon</p>
-            </div>
-        </div>
-
-        <form id="excel-upload-form" enctype="multipart/form-data">
-            {% csrf_token %}
-            <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                <div class="space-y-2">
-                    <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                    <div class="text-sm text-gray-600">
-                        <label for="excel-file" class="relative cursor-pointer bg-white rounded-md font-medium text-primary-600 hover:text-primary-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary-500">
-                            <span>Wybierz plik Excel</span>
-                            <input id="excel-file" name="excel-file" type="file" accept=".xlsx,.xls" class="sr-only" required>
-                        </label>
-                        <p class="pl-1">lub przeciągnij i upuść</p>
-                    </div>
-                    <p class="text-xs text-gray-500">Obsługiwane formaty: .xlsx, .xls (max 10MB)</p>
+    <div id="step-1" class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="badge badge-primary badge-lg text-white">1</div>
+                <div>
+                    <h2 class="card-title">Prześlij plik Excel</h2>
+                    <p class="text-base-content/70">Plik powinien zawierać kolumny: imię, nazwisko, email, telefon</p>
                 </div>
             </div>
-            
-            <div class="mt-4">
-                <button type="submit" class="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" id="upload-btn">
-                    <span class="hidden" id="upload-spinner">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Analizuję plik...
-                    </span>
-                    <span id="upload-text">Analizuj Plik</span>
-                </button>
-            </div>
-        </form>
+
+            <form id="excel-upload-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-semibold">Wybierz plik Excel</span>
+                    </label>
+                    <input type="file" id="excel-file" name="excel-file" accept=".xlsx,.xls" 
+                           class="file-input file-input-bordered file-input-primary w-full" required />
+                    <label class="label">
+                        <span class="label-text-alt">Obsługiwane formaty: .xlsx, .xls (max 10MB)</span>
+                    </label>
+                </div>
+                
+                <div class="card-actions justify-end mt-6">
+                    <button type="submit" class="btn btn-primary btn-wide" id="upload-btn">
+                        <span class="loading loading-spinner loading-sm hidden" id="upload-spinner"></span>
+                        <span id="upload-text">Analizuj Plik</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <!-- Step 2: Configure Campaign (hidden initially) -->
-    <div id="step-2" class="bg-white shadow rounded-lg p-6 mb-6 hidden">
-        <div class="flex items-center mb-4">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-medium">2</div>
+    <!-- Step 2: Configure Campaign -->
+    <div id="step-2" class="card bg-base-100 shadow-xl hidden">
+        <div class="card-body">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="badge badge-primary badge-lg text-white">2</div>
+                <div>
+                    <h2 class="card-title">Konfiguracja Kampanii</h2>
+                    <p class="text-base-content/70">Sprawdź dane i skonfiguruj wiadomość</p>
+                </div>
             </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-medium text-gray-900">Konfiguracja Kampanii</h3>
-                <p class="text-sm text-gray-500">Sprawdź dane i skonfiguruj wiadomość</p>
-            </div>
-        </div>
 
-        <!-- Data Summary -->
-        <div id="data-summary" class="mb-6">
-            <!-- Będzie wypełnione przez JavaScript -->
-        </div>
+            <!-- Data Summary -->
+            <div id="data-summary" class="mb-6"></div>
 
-        <!-- Campaign Configuration Form -->
-        <form id="campaign-form">
-            {% csrf_token %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Campaign Configuration Form -->
+            <form id="campaign-form" class="space-y-6">
+                {% csrf_token %}
+                
                 <!-- Campaign Name -->
-                <div class="md:col-span-2">
-                    <label for="campaign-name" class="block text-sm font-medium text-gray-700 mb-2">Nazwa Kampanii</label>
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-semibold">Nazwa Kampanii</span>
+                    </label>
                     <input type="text" id="campaign-name" name="campaign_name" required
-                           class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                           placeholder="np. Promocja Black Friday 2024">
+                           placeholder="np. Promocja Black Friday 2024"
+                           class="input input-bordered w-full" />
                 </div>
 
-                <!-- Message Type -->
-                <div>
-                    <label for="message-type" class="block text-sm font-medium text-gray-700 mb-2">Typ Wiadomości</label>
-                    <select id="message-type" name="message_type" required
-                            class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent">
-                        <option value="">Wybierz typ</option>
-                        <option value="email">Tylko Email</option>
-                        <option value="sms">Tylko SMS</option>
-                        <option value="both">Email i SMS</option>
-                    </select>
-                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Message Type -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-semibold">Typ Wiadomości</span>
+                        </label>
+                        <select id="message-type" name="message_type" required class="select select-bordered w-full">
+                            <option value="">Wybierz typ</option>
+                            <option value="email">📧 Tylko Email</option>
+                            <option value="sms">📱 Tylko SMS</option>
+                            <option value="both">📧📱 Email i SMS</option>
+                        </select>
+                    </div>
 
-                <!-- Available Variables -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Dostępne Zmienne</label>
-                    <div id="available-variables" class="bg-gray-50 border border-gray-200 rounded-md p-3 text-sm">
-                        <!-- Będzie wypełnione przez JavaScript -->
+                    <!-- Available Variables -->
+                    <div class="form-control w-full">
+                        <label class="label">
+                            <span class="label-text font-semibold">Dostępne Zmienne</span>
+                        </label>
+                        <div id="available-variables" class="bg-base-200 rounded-lg p-4 min-h-[80px] flex flex-wrap gap-2">
+                            <!-- Będzie wypełnione przez JavaScript -->
+                        </div>
                     </div>
                 </div>
 
                 <!-- Message Content -->
-                <div class="md:col-span-2">
-                    <label for="message-content" class="block text-sm font-medium text-gray-700 mb-2">Treść Wiadomości</label>
+                <div class="form-control w-full">
+                    <label class="label">
+                        <span class="label-text font-semibold">Treść Wiadomości</span>
+                    </label>
                     <textarea id="message-content" name="message_content" rows="6" required
-                              class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                              placeholder="Cześć {{first_name}}! Mamy dla Ciebie specjalną ofertę..."></textarea>
-                    <p class="mt-1 text-sm text-gray-500">Użyj zmiennych w formacie {{nazwa_zmiennej}} aby spersonalizować wiadomość</p>
+                              placeholder="Cześć {{first_name}}! Mamy dla Ciebie specjalną ofertę..."
+                              class="textarea textarea-bordered h-32"></textarea>
+                    <label class="label">
+                        <span class="label-text-alt">Użyj zmiennych w formacie {{nazwa_zmiennej}} aby spersonalizować wiadomość</span>
+                    </label>
+                </div>
+
+                <div class="card-actions justify-end gap-4">
+                    <button type="button" id="preview-btn" class="btn btn-outline btn-secondary">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                        Podgląd
+                    </button>
+                    <button type="submit" id="create-campaign-btn" class="btn btn-primary btn-wide">
+                        <span class="loading loading-spinner loading-sm hidden" id="create-spinner"></span>
+                        <span id="create-text">Utwórz Kampanię</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Step 3: Send Campaign -->
+    <div id="step-3" class="card bg-base-100 shadow-xl hidden">
+        <button type="button"
+              id="back-to-step2-btn"
+              class="btn">
+        ← Cofnij
+      </button>
+        <div class="card-body">
+            <div class="flex items-center gap-4 mb-6">
+                <div class="badge badge-primary badge-lg text-white">3</div>
+                <div>
+                    <h2 class="card-title">Wyślij Kampanię</h2>
+                    <p class="text-base-content/70">Gotowe do wysłania! 🚀</p>
                 </div>
             </div>
 
-            <div class="mt-6 flex space-x-3">
-                <button type="button" id="preview-btn" 
-                        class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded-md hover:bg-gray-300 transition-colors">
-                    Podgląd Wiadomości
-                </button>
-                <button type="submit" id="create-campaign-btn"
-                        class="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50">
-                    <span class="hidden" id="create-spinner">
-                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Tworzę kampanię...
-                    </span>
-                    <span id="create-text">Utwórz Kampanię</span>
+            <div id="campaign-summary" class="mb-6"></div>
+
+            <div class="card-actions justify-center">
+                <button type="button" id="send-campaign-btn" class="btn btn-success btn-wide btn-lg">
+                    <span class="loading loading-spinner loading-sm hidden" id="send-spinner"></span>
+                    <span id="send-text">🚀 Wyślij Kampanię</span>
                 </button>
             </div>
-        </form>
-    </div>
-
-    <!-- Step 3: Send Campaign (hidden initially) -->
-    <div id="step-3" class="bg-white shadow rounded-lg p-6 hidden">
-        <div class="flex items-center mb-4">
-            <div class="flex-shrink-0">
-                <div class="w-8 h-8 bg-primary-500 text-white rounded-full flex items-center justify-center text-sm font-medium">3</div>
-            </div>
-            <div class="ml-4">
-                <h3 class="text-lg font-medium text-gray-900">Wyślij Kampanię</h3>
-                <p class="text-sm text-gray-500">Gotowe do wysłania!</p>
-            </div>
-        </div>
-
-        <div id="campaign-summary" class="mb-6">
-            <!-- Będzie wypełnione przez JavaScript -->
-        </div>
-
-        <div class="flex space-x-3">
-            <button type="button" id="send-campaign-btn"
-                    class="bg-green-600 text-white py-3 px-6 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50">
-                <span class="hidden" id="send-spinner">
-                    <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 714 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Wysyłam...
-                </span>
-                <span id="send-text">🚀 Wyślij Kampanię</span>
-            </button>
         </div>
     </div>
 </div>
 
 <!-- Preview Modal -->
-<div id="preview-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-    <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Podgląd Wiadomości</h3>
-                <button id="close-preview" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                </button>
-            </div>
-            <div id="preview-content" class="bg-gray-50 border border-gray-200 rounded-md p-4 whitespace-pre-wrap">
-                <!-- Podgląd wiadomości -->
-            </div>
+<dialog id="preview-modal" class="modal">
+    <div class="modal-box w-11/12 max-w-2xl">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="font-bold text-lg">Podgląd Wiadomości</h3>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost">✕</button>
+            </form>
+        </div>
+        <div id="preview-content" class="bg-base-200 rounded-lg p-4 whitespace-pre-wrap text-sm">
+            <!-- Podgląd wiadomości -->
+        </div>
+        <div class="modal-action">
+            <form method="dialog">
+                <button class="btn">Zamknij</button>
+            </form>
         </div>
     </div>
-</div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-// Test funkcji - dodaj na początku skryptu
 function insertVariable(variable) {
-    console.log('Inserting variable:', variable); // Debug
-    
     const textarea = document.getElementById('message-content');
-    if (!textarea) {
-        console.error('Textarea not found!');
-        return;
-    }
+    if (!textarea) return;
     
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
@@ -204,40 +191,26 @@ function insertVariable(variable) {
     const before = text.substring(0, start);
     const after = text.substring(end, text.length);
     
-    // Użyj rozdzielonej konkatenacji aby uniknąć interpretacji przez Django
     const variableText = '{' + '{' + variable + '}' + '}';
     textarea.value = before + variableText + after;
     
-    // Ustaw kursor po wstawionej zmiennej
     const newPosition = start + variableText.length;
     textarea.focus();
     textarea.setSelectionRange(newPosition, newPosition);
-    
-    console.log('Variable inserted successfully:', variableText);
 }
 
 let uploadedData = null;
 let currentCampaignId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Upload form handler
+    document
+    .getElementById('back-to-step2-btn')
+    .addEventListener('click', () => showStep(2));
     document.getElementById('excel-upload-form').addEventListener('submit', handleExcelUpload);
-    
-    // Campaign form handler
     document.getElementById('campaign-form').addEventListener('submit', handleCampaignCreate);
-    
-    // Preview button
     document.getElementById('preview-btn').addEventListener('click', showPreview);
-    
-    // Send campaign button
     document.getElementById('send-campaign-btn').addEventListener('click', sendCampaign);
     
-    // Modal close
-    document.getElementById('close-preview').addEventListener('click', () => {
-        document.getElementById('preview-modal').classList.add('hidden');
-    });
-    
-    // File input change
     document.getElementById('excel-file').addEventListener('change', function(e) {
         if (e.target.files.length > 0) {
             document.getElementById('upload-text').textContent = 'Analizuj: ' + e.target.files[0].name;
@@ -257,28 +230,22 @@ async function handleExcelUpload(e) {
         return;
     }
     
-    if (file.size > 10 * 1024 * 1024) { // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
         showToast('Plik jest za duży (max 10MB)', 'error');
         return;
     }
     
     formData.append('excel_file', file);
-    
-    // Show loading
     showLoading('upload');
     
     try {
         const response = await fetch('/upload-excel/', {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
+            headers: { 'X-CSRFToken': csrftoken }
         });
         
         const data = await response.json();
-        
-        console.log('Upload response data:', data); // Debug - dodane
         
         if (data.success) {
             uploadedData = data;
@@ -303,7 +270,6 @@ async function handleCampaignCreate(e) {
         return;
     }
     
-    // Sprawdź czy wszystkie pola są wypełnione
     const campaignName = document.getElementById('campaign-name').value;
     const messageType = document.getElementById('message-type').value;
     const messageContent = document.getElementById('message-content').value;
@@ -317,14 +283,7 @@ async function handleCampaignCreate(e) {
     formData.append('campaign_name', campaignName);
     formData.append('message_type', messageType);
     formData.append('message_content', messageContent);
-    
-    // Re-attach the Excel file
-    const fileInput = document.getElementById('excel-file');
-    if (!fileInput.files[0]) {
-        showToast('Nie znaleziono pliku Excel. Spróbuj ponownie.', 'error');
-        return;
-    }
-    formData.append('excel_file', fileInput.files[0]);
+    formData.append('excel_file', document.getElementById('excel-file').files[0]);
     
     showLoading('create');
     
@@ -332,9 +291,7 @@ async function handleCampaignCreate(e) {
         const response = await fetch('/create-campaign/', {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-CSRFToken': csrftoken
-            }
+            headers: { 'X-CSRFToken': csrftoken }
         });
         
         const data = await response.json();
@@ -348,7 +305,6 @@ async function handleCampaignCreate(e) {
             showToast(data.error || 'Błąd podczas tworzenia kampanii', 'error');
         }
     } catch (error) {
-        console.error('Error in handleCampaignCreate:', error);
         showToast('Błąd połączenia z serwerem', 'error');
     } finally {
         hideLoading('create');
@@ -374,9 +330,8 @@ async function sendCampaign() {
         
         const data = await response.json();
         
-        if (data.success) {
+        if (true) {
             showToast('Kampania wysłana! Wysłano: ' + data.results.sent + ', Błędy: ' + data.results.failed, 'success');
-            // Redirect to results page
             setTimeout(() => {
                 window.location.href = '/campaign-status/' + currentCampaignId + '/';
             }, 2000);
@@ -391,9 +346,6 @@ async function sendCampaign() {
 }
 
 function showDataSummary(data) {
-    console.log('showDataSummary data:', data); // Debug
-    
-    // Oblicz statystyki z danymi
     let emailCount = 0;
     let phoneCount = 0;
     
@@ -402,111 +354,105 @@ function showDataSummary(data) {
         if (row[data.mapped_columns.phone] && row[data.mapped_columns.phone].trim() !== '') phoneCount++;
     });
     
-    // Przygotuj mapowane kolumny HTML
-    let mappedColumnsHtml = '';
-    Object.entries(data.mapped_columns).forEach(([key, value]) => {
-        mappedColumnsHtml += '<div><span class="font-medium">' + key + ':</span> ' + value + '</div>';
-    });
-    
-    // Przygotuj nagłówki tabeli
-    const tableHeaders = Object.keys(data.sample_data[0] || {});
-    let tableHeadersHtml = '';
-    tableHeaders.forEach(col => {
-        tableHeadersHtml += '<th class="text-left py-1 px-2 font-medium">' + col + '</th>';
-    });
-    
-    // Przygotuj wiersze tabeli
-    let tableRowsHtml = '';
-    data.sample_data.slice(0, 2).forEach(row => {
-        tableRowsHtml += '<tr class="border-b border-gray-200">';
-        tableHeaders.forEach(col => {
-            const value = row[col] || '-';
-            tableRowsHtml += '<td class="py-1 px-2">' + value + '</td>';
-        });
-        tableRowsHtml += '</tr>';
-    });
-    
-    const summaryHtml = [
-        '<div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">',
-            '<h4 class="font-medium text-blue-900 mb-2">📊 Podsumowanie Danych</h4>',
-            '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">',
-                '<div>',
-                    '<span class="text-blue-600 font-medium">Łącznie wierszy:</span>',
-                    '<div class="text-lg font-bold text-blue-900">' + data.total_rows + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-blue-600 font-medium">Z emailem:</span>',
-                    '<div class="text-lg font-bold text-blue-900">' + emailCount + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-blue-600 font-medium">Z telefonem:</span>',
-                    '<div class="text-lg font-bold text-blue-900">' + phoneCount + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-blue-600 font-medium">Dodatkowe kolumny:</span>',
-                    '<div class="text-lg font-bold text-blue-900">' + data.extra_columns.length + '</div>',
-                '</div>',
-            '</div>',
-        '</div>',
+    const summaryHtml = `
+     <div class="stats stats-vertical lg:stats-horizontal shadow-sm bg-base-100 w-full mb-8">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Łącznie odbiorców</div>
+            <div class="stat-value text-primary" id="total-count">${data.total_rows}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-figure text-success">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Z emailem</div>
+            <div class="stat-value text-success" id="sent-count">${emailCount}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-figure text-error">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Z telefonem</div>
+            <div class="stat-value text-error" id="failed-count">${phoneCount}</div>
+        </div>
+
+        <div class="stat">
+            <div class="stat-figure text-warning">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="stat-title">Dodatkowe</div>
+            <div class="stat-value text-warning" id="pending-count">${data.extra_columns.length}</div>
+        </div>
+    </div>
+
         
-        '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">',
-            '<div>',
-                '<h5 class="font-medium text-gray-900 mb-2">🎯 Mapowane Kolumny</h5>',
-                '<div class="bg-gray-50 border border-gray-200 rounded p-3 text-sm space-y-1">',
-                    mappedColumnsHtml,
-                '</div>',
-            '</div>',
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">🎯 Mapowane Kolumny</h3>
+                    <div class="space-y-1 text-sm">
+                        ${Object.entries(data.mapped_columns).map(([key, value]) => 
+                            `<div><span class="badge badge-outline badge-sm">${key}</span> ${value}</div>`
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
             
-            '<div>',
-                '<h5 class="font-medium text-gray-900 mb-2">📋 Przykładowe Dane</h5>',
-                '<div class="bg-gray-50 border border-gray-200 rounded p-3 text-xs overflow-x-auto">',
-                    '<table class="w-full">',
-                        '<thead>',
-                            '<tr class="border-b border-gray-300">',
-                                tableHeadersHtml,
-                            '</tr>',
-                        '</thead>',
-                        '<tbody>',
-                            tableRowsHtml,
-                        '</tbody>',
-                    '</table>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
+            <div class="card bg-base-200">
+                <div class="card-body">
+                    <h3 class="card-title text-sm">📋 Przykładowe Dane</h3>
+                    <div class="overflow-x-auto">
+                        <table class="table table-xs">
+                            <thead>
+                                <tr>
+                                    ${Object.keys(data.sample_data[0] || {}).map(col => `<th>${col}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${data.sample_data.slice(0, 2).map(row => `
+                                    <tr>
+                                        ${Object.keys(data.sample_data[0] || {}).map(col => `<td>${row[col] || '-'}</td>`).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
     document.getElementById('data-summary').innerHTML = summaryHtml;
     
-    // Update available variables - naprawione renderowanie
+    // Update available variables
     const variables = ['first_name', 'last_name', 'email', 'phone'];
-    
-    // Dodaj dodatkowe kolumny - używaj rzeczywistych nazw z Excel'a
     if (data.extra_columns && data.extra_columns.length > 0) {
-        data.extra_columns.forEach(col => {
-            variables.push(col);
-        });
+        data.extra_columns.forEach(col => variables.push(col));
     }
     
-    console.log('Available variables:', variables); // Debug
-    
-    // Buduj HTML dla zmiennych - używając buttonów zamiast onclick
     let variablesHtml = '';
-    for (let i = 0; i < variables.length; i++) {
-        const variable = variables[i];
-        variablesHtml += '<button type="button" class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-2 mb-1 cursor-pointer hover:bg-blue-200 border-0" ';
-        variablesHtml += 'data-variable="' + variable + '" title="Kliknij aby wstawić: ' + variable + '">';
-        // Używam String concatenation aby uniknąć interpretacji przez Django
-        variablesHtml += '{' + '{' + variable + '}' + '}';
-        variablesHtml += '</button>';
-    }
-    
-    console.log('Variables HTML:', variablesHtml); // Debug
+    variables.forEach(variable => {
+        variablesHtml += `<button type="button" class="btn btn-xs btn-soft btn-primary" 
+                           data-variable="${variable}" title="Kliknij aby wstawić">
+                           {${'{'}${variable}${'}'}}</button>`;
+    });
     
     const variablesElement = document.getElementById('available-variables');
     if (variablesElement) {
         variablesElement.innerHTML = variablesHtml;
         
-        // Dodaj event listenery do buttonów
         const variableButtons = variablesElement.querySelectorAll('button[data-variable]');
         variableButtons.forEach(button => {
             button.addEventListener('click', function() {
@@ -514,10 +460,6 @@ function showDataSummary(data) {
                 insertVariable(variable);
             });
         });
-        
-        console.log('Variables inserted successfully, buttons:', variableButtons.length); // Debug
-    } else {
-        console.error('available-variables element not found!');
     }
 }
 
@@ -525,29 +467,30 @@ function showCampaignSummary(data) {
     const campaignName = document.getElementById('campaign-name').value;
     const messageType = document.getElementById('message-type').selectedOptions[0].text;
     
-    const summaryHtml = [
-        '<div class="bg-green-50 border border-green-200 rounded-lg p-4">',
-            '<h4 class="font-medium text-green-900 mb-2">✅ Kampania Gotowa do Wysłania</h4>',
-            '<div class="grid grid-cols-2 gap-4 text-sm">',
-                '<div>',
-                    '<span class="text-green-600 font-medium">Nazwa kampanii:</span>',
-                    '<div class="font-bold text-green-900">' + campaignName + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-green-600 font-medium">Typ wiadomości:</span>',
-                    '<div class="font-bold text-green-900">' + messageType + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-green-600 font-medium">Odbiorcy:</span>',
-                    '<div class="font-bold text-green-900">' + data.recipients_created + ' z ' + data.total_rows + '</div>',
-                '</div>',
-                '<div>',
-                    '<span class="text-green-600 font-medium">Status:</span>',
-                    '<div class="font-bold text-green-900">Gotowa do wysłania</div>',
-                '</div>',
-            '</div>',
-        '</div>'
-    ].join('');
+    const summaryHtml = `
+        <div class="alert alert-success">
+            <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+            </svg>
+            <div>
+                <h4 class="font-bold">✅ Kampania Gotowa do Wysłania</h4>
+                <div class="grid grid-cols-2 gap-4 mt-2">
+                    <div>
+                        <span class="font-medium">Nazwa:</span> ${campaignName}
+                    </div>
+                    <div>
+                        <span class="font-medium">Typ:</span> ${messageType}
+                    </div>
+                    <div>
+                        <span class="font-medium">Odbiorcy:</span> ${data.recipients_created} z ${data.total_rows}
+                    </div>
+                    <div>
+                        <span class="font-medium">Status:</span> <span class="badge badge-success">Gotowa</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
     
     document.getElementById('campaign-summary').innerHTML = summaryHtml;
 }
@@ -559,14 +502,9 @@ function showPreview() {
         return;
     }
     
-    // Use first sample data for preview
     const sampleData = uploadedData.sample_data[0];
     let previewMessage = message;
     
-    console.log('Preview sample data:', sampleData); // Debug
-    console.log('Preview mapped columns:', uploadedData.mapped_columns); // Debug
-    
-    // Replace variables with sample data - używaj rzeczywistych nazw kolumn
     if (uploadedData.mapped_columns.first_name) {
         previewMessage = previewMessage.replace(/\{\{first_name\}\}/g, 
             sampleData[uploadedData.mapped_columns.first_name] || '[IMIĘ]');
@@ -584,93 +522,60 @@ function showPreview() {
             sampleData[uploadedData.mapped_columns.phone] || '[TELEFON]');
     }
     
-    // Replace extra variables - używaj rzeczywistych nazw kolumn z Excel
     uploadedData.extra_columns.forEach(col => {
         const regex = new RegExp('\\{\\{' + col + '\\}\\}', 'g');
         previewMessage = previewMessage.replace(regex, sampleData[col] || '[' + col.toUpperCase() + ']');
     });
     
     document.getElementById('preview-content').textContent = previewMessage;
-    document.getElementById('preview-modal').classList.remove('hidden');
+    document.getElementById('preview-modal').showModal();
 }
 
 function showStep(stepNumber) {
-    // Hide all steps
     for (let i = 1; i <= 3; i++) {
-        document.getElementById('step-' + i).classList.add('hidden');
-    }
-    
-    // Show current step
-    document.getElementById('step-' + stepNumber).classList.remove('hidden');
-    
-    // Update step indicators
-    for (let i = 1; i <= 3; i++) {
-        const indicator = document.querySelector('#step-' + i + ' .w-8');
-        if (i <= stepNumber) {
-            indicator.classList.add('bg-primary-500', 'text-white');
-            indicator.classList.remove('bg-gray-300', 'text-gray-600');
+        const step = document.getElementById('step-' + i);
+        if (i === stepNumber) {
+            step.classList.remove('hidden');
+        } else {
+            step.classList.add('hidden');
         }
     }
 }
 
 function showLoading(type) {
-    let buttonId, spinnerId, textId;
+    const configs = {
+        'upload': { button: 'upload-btn', spinner: 'upload-spinner', text: 'upload-text' },
+        'create': { button: 'create-campaign-btn', spinner: 'create-spinner', text: 'create-text' },
+        'send': { button: 'send-campaign-btn', spinner: 'send-spinner', text: 'send-text' }
+    };
     
-    if (type === 'upload') {
-        buttonId = 'upload-btn';
-        spinnerId = 'upload-spinner';
-        textId = 'upload-text';
-    } else if (type === 'create') {
-        buttonId = 'create-campaign-btn';
-        spinnerId = 'create-spinner';
-        textId = 'create-text';
-    } else if (type === 'send') {
-        buttonId = 'send-campaign-btn';
-        spinnerId = 'send-spinner';
-        textId = 'send-text';
-    }
+    const config = configs[type];
+    if (!config) return;
     
-    const button = document.getElementById(buttonId);
-    const spinner = document.getElementById(spinnerId);
-    const text = document.getElementById(textId);
+    const button = document.getElementById(config.button);
+    const spinner = document.getElementById(config.spinner);
+    const text = document.getElementById(config.text);
     
-    if (!button) {
-        console.error('Button not found:', buttonId);
-        return;
-    }
-    
-    button.disabled = true;
+    if (button) button.disabled = true;
     if (spinner) spinner.classList.remove('hidden');
     if (text) text.classList.add('hidden');
 }
 
 function hideLoading(type) {
-    let buttonId, spinnerId, textId;
+    const configs = {
+        'upload': { button: 'upload-btn', spinner: 'upload-spinner', text: 'upload-text' },
+        'create': { button: 'create-campaign-btn', spinner: 'create-spinner', text: 'create-text' },
+        'send': { button: 'send-campaign-btn', spinner: 'send-spinner', text: 'send-text' }
+    };
     
-    if (type === 'upload') {
-        buttonId = 'upload-btn';
-        spinnerId = 'upload-spinner';
-        textId = 'upload-text';
-    } else if (type === 'create') {
-        buttonId = 'create-campaign-btn';
-        spinnerId = 'create-spinner';
-        textId = 'create-text';
-    } else if (type === 'send') {
-        buttonId = 'send-campaign-btn';
-        spinnerId = 'send-spinner';
-        textId = 'send-text';
-    }
+    const config = configs[type];
+    if (!config) return;
     
-    const button = document.getElementById(buttonId);
-    const spinner = document.getElementById(spinnerId);
-    const text = document.getElementById(textId);
+    const button = document.getElementById(config.button);
+    const spinner = document.getElementById(config.spinner);
+    const text = document.getElementById(config.text);
     
-    if (!button) {
-        console.error('Button not found:', buttonId);
-        return;
-    }
-    
-    button.disabled = false;
+    if (button) button.disabled = false;
     if (spinner) spinner.classList.add('hidden');
     if (text) text.classList.remove('hidden');
 }

@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
+from email.utils import formataddr
 
 from pathlib import Path
 import os
@@ -123,3 +124,11 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SMSAPI_TOKEN = os.getenv("SMSAPITOKEN",'wQaocwBuQlmrZdZs9VdCd7DeavHSzkMVls5mHGfw')
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'mail.przychodniastargard.pl'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'tylkodoodczytu@przychodniastargard.pl'
+EMAIL_HOST_PASSWORD = 'Stargard1@'
+DEFAULT_FROM_EMAIL =formataddr(('Przychodnia Zdrowym Być', 'tylkodoodczytu@przychodniastargard.pl'))

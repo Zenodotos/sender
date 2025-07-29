@@ -1,87 +1,121 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="pl" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}System Wysyłki SMS/Email{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.4.0/dist/full.min.css" rel="stylesheet" type="text/css" />
     <script>
         tailwind.config = {
             theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#eff6ff',
-                            100: '#dbeafe',
-                            500: '#3b82f6',
-                            600: '#2563eb',
-                            700: '#1d4ed8',
-                        }
-                    }
-                }
+                extend: {}
+            },
+            plugins: [require("daisyui")],
+            daisyui: {
+                themes: ["light", "dark", "cupcake"],
+                base: true,
+                styled: true,
+                utils: true,
             }
         }
     </script>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <h1 class="text-xl font-bold text-gray-900">📧 System Wysyłki</h1>
-                    </div>
-                    <div class="hidden md:ml-8 md:flex md:space-x-8">
-                        <a href="{% url 'upload' %}" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                            Nowa Kampania
-                        </a>
-                        <a href="{% url 'campaigns' %}" class="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
-                            Historia Kampanii
-                        </a>
-                    </div>
+<body class="min-h-screen bg-base-200">
+    <!-- Navigation with DaisyUI Navbar -->
+    <div class="navbar bg-base-100 shadow-md">
+        <div class="navbar-start">
+            <div class="dropdown">
+                <div tabindex="0" role="button" class="btn btn-ghost lg:hidden">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"></path>
+                    </svg>
                 </div>
+                <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow-sm">
+                    <li><a href="{% url 'upload' %}">Nowa Kampania</a></li>
+                    <li><a href="{% url 'campaigns' %}">Historia Kampanii</a></li>
+                    <li><a href="{% url 'template' %}">Wzór pliku Excel</a></li>
+                </ul>
+            </div>
+            <a class="btn btn-ghost text-xl" href="{% url 'upload' %}">
+                📧 System Wysyłki
+            </a>
+        </div>
+        <div class="navbar-center hidden lg:flex">
+            <ul class="menu menu-horizontal px-1">
+                <li><a href="{% url 'upload' %}">Nowa Kampania</a></li>
+                <li><a href="{% url 'campaigns' %}">Historia Kampanii</a></li>
+                <li><a href="{% url 'template' %}">Wzór pliku Excel</a></li>
+            </ul>
+        </div>
+        <div class="navbar-end">
+            <div class="dropdown dropdown-end">
+                <div tabindex="0" role="button" class="btn btn-ghost">
+                   <p>Motyw</p>
+                </div>
+                <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow">
+                    <li><a onclick="setTheme('light')">Jasny motyw</a></li>
+                    <li><a onclick="setTheme('dark')">Ciemny motyw</a></li>
+                    <li><a onclick="setTheme('cupcake')">Cupcake</a></li>
+                </ul>
             </div>
         </div>
-    </nav>
+    </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+    <main class="container mx-auto px-4 py-6 max-w-7xl">
         {% block content %}{% endblock %}
     </main>
 
-    <!-- Toast Notifications -->
-    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+    <!-- Toast Notifications with DaisyUI Alerts -->
+    <div class="toast toast-top toast-end z-50" id="toast-container"></div>
 
     <script>
-        // Funkcja do wyświetlania powiadomień
+        // Theme switcher
+        function setTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        // Load saved theme
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(savedTheme);
+
+        // Enhanced toast notifications with DaisyUI
         function showToast(message, type = 'info') {
-            const colors = {
-                'success': 'bg-green-500',
-                'error': 'bg-red-500',
-                'warning': 'bg-yellow-500',
-                'info': 'bg-blue-500'
+            const alertTypes = {
+                'success': 'alert-success',
+                'error': 'alert-error',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            };
+            
+            const icons = {
+                'success': '✓',
+                'error': '✗',
+                'warning': '⚠',
+                'info': 'ℹ'
             };
             
             const toast = document.createElement('div');
-            toast.className = `${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0`;
-            toast.textContent = message;
+            toast.className = `alert ${alertTypes[type]} shadow-lg mb-2 animate-bounce-in`;
+            toast.innerHTML = `
+                <div class="flex items-center">
+                    <span class="text-lg mr-2">${icons[type]}</span>
+                    <span>${message}</span>
+                </div>
+            `;
             
             document.getElementById('toast-container').appendChild(toast);
             
-            // Animacja wejścia
+            // Auto remove after 5 seconds
             setTimeout(() => {
-                toast.classList.remove('translate-x-full', 'opacity-0');
-            }, 100);
-            
-            // Usunięcie po 5 sekundach
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
+                toast.style.animation = 'fade-out 0.3s ease-out forwards';
                 setTimeout(() => toast.remove(), 300);
             }, 5000);
         }
 
-        // CSRF Token dla AJAX
+        // CSRF Token utility
         function getCookie(name) {
             let cookieValue = null;
             if (document.cookie && document.cookie !== '') {
@@ -98,6 +132,23 @@
         }
         const csrftoken = getCookie('csrftoken');
     </script>
+
+    <style>
+        @keyframes bounce-in {
+            0% { transform: translateX(100%); opacity: 0; }
+            60% { transform: translateX(-10px); opacity: 1; }
+            100% { transform: translateX(0); }
+        }
+        
+        @keyframes fade-out {
+            from { opacity: 1; transform: translateX(0); }
+            to { opacity: 0; transform: translateX(100%); }
+        }
+        
+        .animate-bounce-in {
+            animation: bounce-in 0.3s ease-out;
+        }
+    </style>
 
     {% block extra_js %}{% endblock %}
 </body>

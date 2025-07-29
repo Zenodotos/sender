@@ -5,6 +5,7 @@ urlpatterns = [
     # Main views
     path('', views.upload_view, name='upload'),
     path('campaigns/', views.campaigns_view, name='campaigns'),
+    path('template/', views.template, name='template'),
     path('campaign-status/<uuid:campaign_id>/', views.campaign_status, name='campaign_status'),
     
     # AJAX endpoints

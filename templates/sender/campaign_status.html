@@ -3,295 +3,301 @@
 {% block title %}Status Kampanii - {{ campaign.name }}{% endblock %}
 
 {% block content %}
-<div class="px-4 py-6 sm:px-0">
+<div class="space-y-6">
     <!-- Header -->
-    <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-3xl font-bold text-gray-900">{{ campaign.name }}</h2>
-                <p class="mt-2 text-gray-600">{{ campaign.get_message_type_display }} • Utworzona {{ campaign.created_at|date:"d.m.Y H:i" }}</p>
-            </div>
-            <div class="flex space-x-3">
-                <a href="{% url 'upload' %}" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors">
-                    Nowa Kampania
-                </a>
-                <button onclick="refreshStatus()" id="refresh-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-300 transition-colors">
-                    🔄 Odśwież
-                </button>
-            </div>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+            <h1 class="text-4xl font-bold text-base-content">{{ campaign.name }}</h1>
+            <p class="text-base-content/70 mt-2">
+                <span class="badge badge-outline">{{ campaign.get_message_type_display }}</span>
+                <span class="ml-2">Utworzona {{ campaign.created_at|date:"d.m.Y H:i" }}</span>
+            </p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'upload' %}" class="btn btn-primary">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Nowa Kampania
+            </a>
+            <button onclick="refreshStatus()" id="refresh-btn" class="btn btn-outline">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                </svg>
+                Odśwież
+            </button>
         </div>
     </div>
 
-    <!-- Campaign Status -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <!-- Total Recipients -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Łącznie odbiorców</dt>
-                        <dd class="text-lg font-medium text-gray-900" id="total-count">{{ stats.total }}</dd>
-                    </dl>
-                </div>
+    <!-- Campaign Status Cards -->
+    <div class="stats stats-vertical lg:stats-horizontal shadow-xl bg-base-100 w-full">
+        <div class="stat">
+            <div class="stat-figure text-primary">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3z"></path>
+                </svg>
             </div>
+            <div class="stat-title">Łącznie odbiorców</div>
+            <div class="stat-value text-primary" id="total-count">{{ stats.total }}</div>
         </div>
 
-        <!-- Sent -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Wysłane</dt>
-                        <dd class="text-lg font-medium text-gray-900" id="sent-count">{{ stats.sent }}</dd>
-                    </dl>
-                </div>
+        <div class="stat">
+            <div class="stat-figure text-success">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
             </div>
+            <div class="stat-title">Wysłane</div>
+            <div class="stat-value text-success" id="sent-count">{{ stats.sent }}</div>
         </div>
 
-        <!-- Failed -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-red-500 rounded-md flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Błędy</dt>
-                        <dd class="text-lg font-medium text-gray-900" id="failed-count">{{ stats.failed }}</dd>
-                    </dl>
-                </div>
+        <div class="stat">
+            <div class="stat-figure text-error">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                </svg>
             </div>
+            <div class="stat-title">Błędy</div>
+            <div class="stat-value text-error" id="failed-count">{{ stats.failed }}</div>
         </div>
 
-        <!-- Pending -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
-                        <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="ml-5 w-0 flex-1">
-                    <dl>
-                        <dt class="text-sm font-medium text-gray-500 truncate">Oczekujące</dt>
-                        <dd class="text-lg font-medium text-gray-900" id="pending-count">{{ stats.pending }}</dd>
-                    </dl>
-                </div>
+        <div class="stat">
+            <div class="stat-figure text-warning">
+                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                </svg>
             </div>
+            <div class="stat-title">Oczekujące</div>
+            <div class="stat-value text-warning" id="pending-count">{{ stats.pending }}</div>
         </div>
     </div>
 
-    <!-- Progress Bar -->
+    <!-- Progress Section -->
     {% if stats.total > 0 %}
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Postęp Wysyłki</h3>
-        <div class="w-full bg-gray-200 rounded-full h-2 mb-4">
-            <div class="bg-green-500 h-2 rounded-full transition-all duration-300" 
-                 style="width: {% widthratio stats.sent stats.total 100 %}%"
-                 id="progress-bar"></div>
-        </div>
-        <div class="flex justify-between text-sm text-gray-600">
-            <span id="progress-text">{{ stats.sent }} z {{ stats.total }} wysłanych ({% widthratio stats.sent stats.total 100 %}%)</span>
-            <span>{% if campaign.is_completed %}Zakończono{% else %}W trakcie...{% endif %}</span>
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Postęp Wysyłki
+            </h2>
+            
+            <div class="flex justify-between text-sm mb-2">
+                <span id="progress-text">{{ stats.sent }} z {{ stats.total }} wysłanych ({% widthratio stats.sent stats.total 100 %}%)</span>
+                <span>{% if campaign.is_completed %}✅ Zakończono{% else %}⏳ W trakcie...{% endif %}</span>
+            </div>
+            
+            <progress class="progress progress-success w-full h-4" 
+                     value="{% widthratio stats.sent stats.total 100 %}" 
+                     max="100" 
+                     id="progress-bar"></progress>
         </div>
     </div>
     {% endif %}
 
     <!-- Message Content -->
-    <div class="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Treść Wiadomości</h3>
-        <div class="bg-gray-50 border border-gray-200 rounded-md p-4 tooltip-container cursor-help"
-             title="{{ campaign.message_content|escape }}">
-            <pre class="whitespace-pre-wrap text-sm text-gray-700">{{ campaign.message_content }}</pre>
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <h2 class="card-title">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                </svg>
+                Treść Wiadomości
+            </h2>
             
-            <!-- Custom Tooltip for long messages -->
-            {% if campaign.message_content|length > 200 %}
-            <div class="tooltip">
-                <strong>Pełna treść wiadomości:</strong><br><br>
-                {{ campaign.message_content|escape }}
-            </div>
-            {% endif %}
+
+
+            <div class="chat chat-start">
+                <div class="chat-header mb-1">
+                    {{campaign.name}}
+                    <time class="text-xs opacity-50">{{ campaign.created_at|date:"d.m.Y H:i" }}</time>
+                </div>
+                <div class="chat-bubble">{{ campaign.message_content }}</div>
+                </div>
+
         </div>
     </div>
 
     <!-- Recipients Table -->
-    <div class="bg-white shadow rounded-lg">
-        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">Lista Odbiorców</h3>
-            <div class="flex space-x-2">
-                <select id="status-filter" class="border border-gray-300 rounded-md px-3 py-1 text-sm" onchange="filterRecipients()">
-                    <option value="">Wszystkie statusy</option>
-                    <option value="pending">Oczekujące</option>
-                    <option value="sent">Wysłane</option>
-                    <option value="failed">Błędy</option>
-                    <option value="skipped">Pominięte</option>
-                </select>
-                <input type="text" id="search-input" placeholder="Szukaj..." 
-                       class="border border-gray-300 rounded-md px-3 py-1 text-sm w-64"
-                       onkeyup="filterRecipients()">
-            </div>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Odbiorca</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Kontakt</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">💬 Wiadomość</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Wysłano</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Błąd</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200" id="recipients-table">
-                    {% for recipient in recipients %}
-                    <tr class="recipient-row" 
-                        data-status="{{ recipient.status }}" 
-                        data-search="{{ recipient.first_name }} {{ recipient.last_name }} {{ recipient.email }} {{ recipient.phone }}">
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm font-medium text-gray-900">
-                                {{ recipient.first_name }} {{ recipient.last_name }}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">
-                                {% if recipient.email %}
-                                    <div class="flex items-center">
-                                        📧 {{ recipient.email }}
-                                    </div>
-                                {% endif %}
-                                {% if recipient.phone %}
-                                    <div class="flex items-center">
-                                        📱 {{ recipient.phone }}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            {% if recipient.personalized_message %}
-                            <div class="tooltip-container cursor-pointer inline-block">
-                                <span class="text-xl hover:text-blue-500 transition-colors">✉️</span>
-                                <div class="tooltip">
-                                    {{ recipient.personalized_message|escape }}
-                                </div>
-                            </div>
-                            {% else %}
-                            <span class="text-gray-300">-</span>
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                {% if recipient.status == 'sent' %}bg-green-100 text-green-800
-                                {% elif recipient.status == 'failed' %}bg-red-100 text-red-800
-                                {% elif recipient.status == 'pending' %}bg-yellow-100 text-yellow-800
-                                {% else %}bg-gray-100 text-gray-800{% endif %}">
-                                {% if recipient.status == 'sent' %}✅ Wysłane
-                                {% elif recipient.status == 'failed' %}❌ Błąd
-                                {% elif recipient.status == 'pending' %}⏳ Oczekuje
-                                {% else %}⏸️ Pominięte{% endif %}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {% if recipient.sent_at %}
-                                {{ recipient.sent_at|date:"d.m.Y H:i:s" }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500">
-                            {% if recipient.error_message %}
-                                <div class="max-w-xs truncate" title="{{ recipient.error_message }}">
-                                    {{ recipient.error_message }}
-                                </div>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">
-                            Brak odbiorców w tej kampanii
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        
-        {% if recipients.has_other_pages %}
-        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-            <div class="flex-1 flex justify-between sm:hidden">
-                {% if recipients.has_previous %}
-                    <a href="?page={{ recipients.previous_page_number }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Poprzednia
-                    </a>
-                {% endif %}
-                {% if recipients.has_next %}
-                    <a href="?page={{ recipients.next_page_number }}" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                        Następna
-                    </a>
-                {% endif %}
-            </div>
-            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                <div>
-                    <p class="text-sm text-gray-700">
-                        Wyświetlane <span class="font-medium">{{ recipients.start_index }}</span>
-                        do <span class="font-medium">{{ recipients.end_index }}</span>
-                        z <span class="font-medium">{{ recipients.paginator.count }}</span> wyników
-                    </p>
+    <div class="card bg-base-100 shadow-xl">
+        <div class="card-body">
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h2 class="card-title">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                    Lista Odbiorców
+                </h2>
+                
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <select id="status-filter" class="select select-bordered select-sm w-full max-w-xs" onchange="filterRecipients()">
+                        <option value="">Wszystkie statusy</option>
+                        <option value="pending">Oczekujące</option>
+                        <option value="sent">Wysłane</option>
+                        <option value="failed">Błędy</option>
+                        <option value="skipped">Pominięte</option>
+                    </select>
+                    <input type="text" id="search-input" placeholder="Szukaj..." 
+                           class="input input-bordered input-sm w-full max-w-xs"
+                           onkeyup="filterRecipients()">
                 </div>
-                <div>
-                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                        {% if recipients.has_previous %}
-                            <a href="?page={{ recipients.previous_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                Poprzednia
-                            </a>
-                        {% endif %}
-                        
-                        {% for num in recipients.paginator.page_range %}
-                            {% if recipients.number == num %}
-                                <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-primary-50 text-sm font-medium text-primary-600">
-                                    {{ num }}
-                                </span>
-                            {% else %}
-                                <a href="?page={{ num }}" class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
-                                    {{ num }}
-                                </a>
-                            {% endif %}
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="table table-zebra">
+                    <thead>
+                        <tr>
+                            <th>Odbiorca</th>
+                            <th>Kontakt</th>
+                            <th class="text-center">💬</th>
+                            <th>Status</th>
+                            <th>Wysłano</th>
+                            <th>Błąd</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recipients-table">
+                        {% for recipient in recipients %}
+                        <tr class="recipient-row hover" 
+                            data-status="{{ recipient.status }}" 
+                            data-search="{{ recipient.first_name }} {{ recipient.last_name }} {{ recipient.email }} {{ recipient.phone }}">
+                            <td>
+                                <div class="font-semibold">{{ recipient.first_name }} {{ recipient.last_name }}</div>
+                            </td>
+                            <td>
+                                <div class="space-y-1">
+                                    {% if recipient.email %}
+                                        <div class="flex items-center gap-1 text-sm">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                                <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                                            </svg>
+                                            {{ recipient.email }}
+                                        </div>
+                                    {% endif %}
+                                    {% if recipient.phone %}
+                                        <div class="flex items-center gap-1 text-sm">
+                                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"></path>
+                                            </svg>
+                                            {{ recipient.phone }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                {% if recipient.personalized_message %}
+                                <div class="tooltip" data-tip="{{ recipient.personalized_message|escape }}">
+                                    <button class="btn btn-circle btn-ghost btn-xs">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                                {% else %}
+                                <span class="text-base-content/30">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if recipient.status == 'sent' %}
+                                    <div class="badge badge-success gap-2">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Wysłane
+                                    </div>
+                                {% elif recipient.status == 'failed' %}
+                                    <div class="badge badge-error gap-2">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Błąd
+                                    </div>
+                                {% elif recipient.status == 'pending' %}
+                                    <div class="badge badge-warning gap-2">
+                                        <span class="loading loading-ring loading-xs"></span>
+                                        Oczekuje
+                                    </div>
+                                {% else %}
+                                    <div class="badge badge-ghost gap-2">
+                                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        Pominięte
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">
+                                {% if recipient.sent_at %}
+                                    {{ recipient.sent_at|date:"d.m.Y H:i:s" }}
+                                {% else %}
+                                    <span class="text-base-content/50">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">
+                                {% if recipient.error_message %}
+                                    <div class="tooltip tooltip-left" data-tip="{{ recipient.error_message }}">
+                                        <div class="max-w-xs truncate text-error">
+                                            {{ recipient.error_message|truncatechars:30 }}
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <span class="text-base-content/50">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-8">
+                                <div class="text-base-content/50">
+                                    <svg class="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                    </svg>
+                                    Brak odbiorców w tej kampanii
+                                </div>
+                            </td>
+                        </tr>
                         {% endfor %}
-                        
-                        {% if recipients.has_next %}
-                            <a href="?page={{ recipients.next_page_number }}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-                                Następna
-                            </a>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if recipients.has_other_pages %}
+            <div class="flex justify-center mt-6">
+                <div class="join">
+                    {% if recipients.has_previous %}
+                        <a href="?page={{ recipients.previous_page_number }}" class="join-item btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </a>
+                    {% endif %}
+                    
+                    {% for num in recipients.paginator.page_range %}
+                        {% if recipients.number == num %}
+                            <button class="join-item btn btn-active">{{ num }}</button>
+                        {% else %}
+                            <a href="?page={{ num }}" class="join-item btn">{{ num }}</a>
                         {% endif %}
-                    </nav>
+                    {% endfor %}
+                    
+                    {% if recipients.has_next %}
+                        <a href="?page={{ recipients.next_page_number }}" class="join-item btn">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </a>
+                    {% endif %}
                 </div>
             </div>
+            
+            <div class="text-center text-sm text-base-content/70 mt-4">
+                Wyświetlane {{ recipients.start_index }} - {{ recipients.end_index }} z {{ recipients.paginator.count }} wyników
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -302,13 +308,18 @@ const campaignId = '{{ campaign.uid }}';
 
 // Auto-refresh if campaign is not completed
 {% if not campaign.is_completed %}
-let refreshInterval = setInterval(refreshStatus, 5000); // Refresh every 5 seconds
+let refreshInterval = setInterval(refreshStatus, 5000);
 {% endif %}
 
 async function refreshStatus() {
     const refreshBtn = document.getElementById('refresh-btn');
+    const originalHtml = refreshBtn.innerHTML;
+    
     refreshBtn.disabled = true;
-    refreshBtn.innerHTML = '🔄 Odświeżam...';
+    refreshBtn.innerHTML = `
+        <span class="loading loading-spinner loading-sm"></span>
+        Odświeżam...
+    `;
     
     try {
         const response = await fetch('/api/campaign-status/' + campaignId + '/');
@@ -323,23 +334,25 @@ async function refreshStatus() {
             
             // Update progress bar
             const percentage = data.stats.total > 0 ? Math.round((data.stats.sent / data.stats.total) * 100) : 0;
-            document.getElementById('progress-bar').style.width = percentage + '%';
-            document.getElementById('progress-text').textContent = data.stats.sent + ' z ' + data.stats.total + ' wysłanych (' + percentage + '%)';
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) {
+                progressBar.value = percentage;
+                document.getElementById('progress-text').textContent = 
+                    `${data.stats.sent} z ${data.stats.total} wysłanych (${percentage}%)`;
+            }
             
             // If campaign is completed, stop auto-refresh
             if (data.campaign.is_completed && typeof refreshInterval !== 'undefined') {
                 clearInterval(refreshInterval);
                 showToast('Kampania zakończona!', 'success');
             }
-            
-            // Update table if needed (optional - might require full page reload)
-            // location.reload(); // Uncomment if you want to refresh the whole table
         }
     } catch (error) {
         console.error('Error refreshing status:', error);
+        showToast('Błąd odświeżania statusu', 'error');
     } finally {
         refreshBtn.disabled = false;
-        refreshBtn.innerHTML = '🔄 Odśwież';
+        refreshBtn.innerHTML = originalHtml;
     }
 }
 
@@ -370,48 +383,4 @@ window.addEventListener('beforeunload', function() {
     }
 });
 </script>
-
-<style>
-/* Minimalistyczny tooltip styling */
-.tooltip-container {
-    position: relative;
-    display: inline-block;
-}
-
-.tooltip-container:hover .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-.tooltip {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    bottom: 130%;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #000;
-    color: #fff;
-    padding: 6px 8px;
-    border-radius: 4px;
-    z-index: 1000;
-    max-width: 300px;
-    white-space: pre-wrap;
-    font-size: 11px;
-    line-height: 1.3;
-    transition: opacity 0.2s ease;
-    text-align: left;
-}
-
-.tooltip::after {
-    content: "";
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    margin-left: -4px;
-    border-width: 4px;
-    border-style: solid;
-    border-color: #000 transparent transparent transparent;
-}
-</style>
 {% endblock %}

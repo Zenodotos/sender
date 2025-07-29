@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+
+{% block title %}Przewodnik: Przygotowanie pliku Excel{% endblock %}
+
+{% block content %}
+<div class="space-y-8 p-6">
+
+  <!-- Hero -->
+  <div class="hero bg-base-200 rounded-lg p-8">
+    <div class="hero-content text-center">
+      <div class="max-w-lg">
+        <h1 class="text-5xl font-bold">Przygotowanie pliku Excel</h1>
+        <p class="py-6 text-base-content/70">
+          Dowiedz się, jak poprawnie sformatować i wypełnić plik Excel, aby zaimportować kontakty do kampanii.
+        </p>
+        
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps -->
+  <div class="card bg-base-100 shadow-xl">
+    <div class="card-body">
+      <h2 class="card-title">Kroki przygotowania</h2>
+      <div class="steps mt-4">
+        <div class="step step-primary">1. Pobierz szablon</div>
+        <div class="step step-secondary">2. Uzupełnij dane podstawowe</div>
+        <div class="step step-secondary">3. Dodaj kolumny dodatkowe</div>
+        <div class="step step-secondary">4. Zapisz plik jako .xlsx</div>
+        <div class="step step-secondary">5. Prześlij w panelu</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert -->
+
+  <div role="alert" class="alert alert-warning">
+  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 shrink-0 stroke-current" fill="none" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+  </svg>
+      <span>Uwaga: Kolumny <strong>First Name</strong>, <strong>Last Name</strong>, <strong>Email</strong> i <strong>Phone</strong> są wymagane.</span>
+</div>
+
+  <!-- Required Columns -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h3 class="card-title">1. Dane podstawowe</h3>
+      <table class="table table-zebra mt-4">
+        <thead>
+          <tr>
+            <th>Kolumna</th>
+            <th>Opis</th>
+            <th>Przykład nagłówka</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>First Name</td>
+            <td>Imię odbiorcy</td>
+            <td><code>Imię</code>, <code>First Name</code></td>
+          </tr>
+          <tr>
+            <td>Last Name</td>
+            <td>Nazwisko odbiorcy</td>
+            <td><code>Nazwisko</code>, <code>Last Name</code></td>
+          </tr>
+          <tr>
+            <td>Email</td>
+            <td>Adres e-mail</td>
+            <td><code>Email</code>, <code>E-mail</code></td>
+          </tr>
+          <tr>
+            <td>Phone</td>
+            <td>Numer telefonu</td>
+            <td><code>Telefon</code>, <code>Phone</code></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Extra Columns -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h3 class="card-title">2. Kolumny dodatkowe</h3>
+      <p class="text-base-content/70">
+        Możesz dodać dowolne inne pola, np. <code>Firma</code>, <code>Stanowisko</code>, <code>Notatki</code>.  
+        System automatycznie je zmapuje i zapisze w <code>extra_data</code>.
+      </p>
+      <div class="badge badge-outline mr-2">Firma</div>
+      <div class="badge badge-outline mr-2">Stanowisko</div>
+      <div class="badge badge-outline">Notatki</div>
+    </div>
+  </div>
+
+  <!-- Formatting Tips -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h3 class="card-title">3. Formatowanie</h3>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Użyj formatu <code>.xlsx</code>.</li>
+        <li>Unikaj scalonych komórek.</li>
+        <li>Usuń puste wiersze/kolumny na końcu arkusza.</li>
+        <li>Data i liczby w formacie tekstowym lub odpowiednim formacie Excela.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Sample Data -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h3 class="card-title">4. Przykładowe dane</h3>
+      <div class="overflow-x-auto mt-4">
+        <table class="table table-zebra">
+          <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Firma</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Anna</td>
+              <td>Kowalska</td>
+              <td>anna@example.com</td>
+              <td>+48 600 123 456</td>
+              <td>Example S.A.</td>
+            </tr>
+            <tr>
+              <td>Jan</td>
+              <td>Nowak</td>
+              <td>jan.nowak@firma.pl</td>
+              <td>600 987 654</td>
+              <td>Firma XYZ</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Code Block -->
+  <div class="card bg-base-100 shadow">
+    <div class="card-body">
+      <h3 class="card-title">5. Zapisz i prześlij</h3>
+      <p class="text-base-content/70 mb-4">
+        Po uzupełnieniu danych zapisz plik i przejdź do panelu tworzenia kampanii.
+      </p>
+      <pre class="bg-base-200 p-4 rounded-lg overflow-x-auto"><code class="language-bash">
+# Przykład nazwy pliku:
+mojakampania_contacts.xlsx
+
+# Upload:
+1. Wybierz plik
+2. Zatwierdź
+      </code></pre>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

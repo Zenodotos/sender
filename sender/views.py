@@ -412,7 +412,7 @@ def send_campaign(request, campaign_id):
                 if campaign.message_type == 'email' and recipient.email:
                     success, error_message = sender.send_email(
                         recipient.email, 
-                        f'Wiadomość od {campaign.name}', 
+                        campaign.name, 
                         message
                     )
                 elif campaign.message_type == 'sms' and recipient.phone:
@@ -426,7 +426,7 @@ def send_campaign(request, campaign_id):
                     if recipient.email:
                         email_success, email_error = sender.send_email(
                             recipient.email, 
-                            f'Wiadomość od {campaign.name}', 
+                            f'{campaign.name}', 
                             message
                         )
                         if not email_success and email_error:
@@ -528,3 +528,6 @@ def api_campaign_status(request, campaign_id):
     except Exception as e:
         logger.error(f"Error in api_campaign_status: {str(e)}")
         return JsonResponse({'success': False, 'error': str(e)})
+    
+def template(request):
+    return render(request, 'sender/template.html')
