@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+
+{% block title %}Historia Kampanii - System Wysyłki{% endblock %}
+
+{% block content %}
+<div class="px-4 py-6 sm:px-0">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-3xl font-bold text-gray-900">Historia Kampanii</h2>
+                <p class="mt-2 text-gray-600">Przegląd wszystkich przeprowadzonych kampanii wysyłki</p>
+            </div>
+            <div>
+                <a href="{% url 'upload' %}" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 transition-colors">
+                    + Nowa Kampania
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for campaign in campaigns %}
+        <div class="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+            <div class="p-6">
+                <!-- Campaign Header -->
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex-1">
+                        <h3 class="text-lg font-medium text-gray-900 truncate">{{ campaign.name }}</h3>
+                        <p class="text-sm text-gray-500 mt-1">{{ campaign.get_message_type_display }}</p>
+                    </div>
+                    <div class="ml-4 flex-shrink-0">
+                        {% if campaign.is_completed %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                ✅ Zakończona
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                ⏳ W trakcie
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Campaign Stats -->
+                <div class="mb-4">
+                    {% with stats=campaign.recipients.all %}
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Łącznie:</span>
+                            <div class="font-semibold text-gray-900">{{ stats.count }}</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Wysłane:</span>
+                            <div class="font-semibold text-green-600">{{ stats.sent.count }}</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Błędy:</span>
+                            <div class="font-semibold text-red-600">{{ stats.failed.count }}</div>
+                        </div>
+                        <div>
+                            <span class="text-gray-500">Oczekujące:</span>
+                            <div class="font-semibold text-yellow-600">{{ stats.pending.count }}</div>
+                        </div>
+                    </div>
+                    {% endwith %}
+                </div>
+
+                <!-- Progress Bar -->
+                {% with total=campaign.recipients.count sent=campaign.recipients.sent.count %}
+                {% if total > 0 %}
+                <div class="mb-4">
+                    <div class="flex justify-between text-xs text-gray-600 mb-1">
+                        <span>Postęp</span>
+                        <span>{% widthratio sent total 100 %}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-500 h-2 rounded-full transition-all duration-300" 
+                             style="width: {% widthratio sent total 100 %}%"></div>
+                    </div>
+                </div>
+                {% endif %}
+                {% endwith %}
+
+                <!-- Message Preview -->
+                <div class="mb-4">
+                    <p class="text-xs text-gray-500 mb-1">Treść wiadomości:</p>
+                    <div class="bg-gray-50 border border-gray-200 rounded p-2 text-xs text-gray-700">
+                        <div class="line-clamp-3">
+                            {{ campaign.message_content|truncatechars:120 }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campaign Meta -->
+                <div class="text-xs text-gray-500 mb-4">
+                    <div class="flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                        </svg>
+                        Utworzona: {{ campaign.created_at|date:"d.m.Y H:i" }}
+                    </div>
+                    {% if campaign.sent_at %}
+                    <div class="flex items-center mt-1">
+                        <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
+                            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
+                        </svg>
+                        Wysłana: {{ campaign.sent_at|date:"d.m.Y H:i" }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Actions -->
+                <div class="flex space-x-2">
+                    <a href="{% url 'campaign_status' campaign.uid %}" 
+                       class="flex-1 bg-primary-50 text-primary-700 text-center py-2 px-3 rounded text-sm font-medium hover:bg-primary-100 transition-colors">
+                        Szczegóły
+                    </a>
+                    {% if not campaign.is_completed %}
+                    <button onclick="sendCampaign('{{ campaign.uid }}')" 
+                            class="flex-1 bg-green-50 text-green-700 text-center py-2 px-3 rounded text-sm font-medium hover:bg-green-100 transition-colors">
+                        Wyślij
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Empty State -->
+        <div class="col-span-full">
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2M4 13h2m0 0V9a2 2 0 012-2h2m0 0V6a2 2 0 012-2h2m0 0V6a2 2 0 012-2h2m0 0v1M4 13v-1"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">Brak kampanii</h3>
+                <p class="mt-1 text-sm text-gray-500">Rozpocznij od utworzenia pierwszej kampanii wysyłki</p>
+                <div class="mt-6">
+                    <a href="{% url 'upload' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700">
+                        <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"></path>
+                        </svg>
+                        Nowa Kampania
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Stats Summary -->
+    {% if campaigns %}
+    <div class="mt-12 bg-white rounded-lg shadow p-6">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">📊 Podsumowanie Wszystkich Kampanii</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-blue-600">{{ campaigns.count }}</div>
+                <div class="text-sm text-gray-500">Łączne kampanie</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">
+                    {% with completed=campaigns.completed.count %}{{ completed }}{% endwith %}
+                </div>
+                <div class="text-sm text-gray-500">Zakończone</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-yellow-600">
+                    {% with pending=campaigns.pending.count %}{{ pending }}{% endwith %}
+                </div>
+                <div class="text-sm text-gray-500">W trakcie</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-purple-600">
+                    {% with total_recipients=0 %}
+                        {% for campaign in campaigns %}
+                            {% with total_recipients=total_recipients|add:campaign.recipients.count %}{% endwith %}
+                        {% endfor %}
+                        {{ total_recipients }}
+                    {% endwith %}
+                </div>
+                <div class="text-sm text-gray-500">Łączni odbiorcy</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function sendCampaign(campaignId) {
+    if (!confirm('Czy na pewno chcesz wysłać tę kampanię?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/send-campaign/${campaignId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrftoken,
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showToast(`Kampania wysłana! Wysłano: ${data.results.sent}, Błędy: ${data.results.failed}`, 'success');
+            // Refresh page after 2 seconds
+            setTimeout(() => {
+                location.reload();
+            }, 2000);
+        } else {
+            showToast(data.error || 'Błąd podczas wysyłania kampanii', 'error');
+        }
+    } catch (error) {
+        showToast('Błąd połączenia z serwerem', 'error');
+    }
+}
+
+// Auto-refresh pending campaigns every 30 seconds
+setInterval(() => {
+    const pendingCampaigns = document.querySelectorAll('[data-status="pending"]');
+    if (pendingCampaigns.length > 0) {
+        location.reload();
+    }
+}, 30000);
+</script>
+
+<style>
+.line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>
+{% endblock %}
